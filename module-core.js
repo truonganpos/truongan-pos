@@ -5,7 +5,7 @@
 // 🚨 QUAN TRỌNG: DÁN LINK API TỪ GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY
 const API = "https://script.google.com/macros/s/AKfycbyYGE5lb_Ag6pEa9YT8C31tbk4-lCMu0brWzhqbYo-F3gybmQnRn6Lw8KSFTKGji69Urg/exec";
 
-// --- CÁC BIẾN TOÀN CỤC ---
+// --- 1. CÁC BIẾN TOÀN CỤC ---
 let ALL_PRODUCTS = safeParseArray('ALL_PRODUCTS');
 let ALL_ORDERS = safeParseArray('ALL_ORDERS');
 let ALL_CUSTOMERS = safeParseArray('ALL_CUSTOMERS');
@@ -30,7 +30,7 @@ let currentOrderItems = [];
 let editingOrderId = null;
 let lastSettingsHash = ""; // Quản lý thay đổi cấu hình
 
-// --- HÀM TIỆN ÍCH (HELPERS) ---
+// --- 2. HÀM TIỆN ÍCH (HELPERS) ---
 function safeParseArray(key) { 
     try { let raw = localStorage.getItem(key); if(raw && raw !== 'null' && raw !== 'undefined') { let parsed = JSON.parse(raw); if(Array.isArray(parsed)) return parsed; } } catch(e) {} 
     return []; 
@@ -90,7 +90,7 @@ function generateCustomerId() {
     return 'KH' + String(maxId + 1).padStart(4, '0');
 }
 
-// --- LOGIC UI CHUNG ---
+// --- 3. LOGIC UI CHUNG (SỰ KIỆN CLICK / PHÍM) ---
 document.addEventListener('keydown', function(e) {
     if(e.key === "Escape") {
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
@@ -141,6 +141,7 @@ function openImageModal(src) {
 
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+// --- 4. TÍNH NĂNG CÀI ĐẶT (SETTINGS & CARRIERS) ---
 function openSettingsModal() {
     let s = safeParseObj('truongan_settings');
     let sn = document.getElementById('setStoreName'); if(sn) sn.value = s.storeName || 'TRƯỜNG AN STORE';
@@ -194,6 +195,45 @@ function toggleCol(type, key) {
     else { hiddenColsOrders[key] = !hiddenColsOrders[key]; localStorage.setItem('hiddenColsOrders', JSON.stringify(hiddenColsOrders)); renderOrdersData(); } 
 }
 
+function loadCustomCarriers() {
+    let customCarriers = []; 
+    try { let raw = localStorage.getItem('truongan_custom_carriers'); if(raw) customCarriers = JSON.parse(raw); } catch(e){}
+    
+    let selects = [document.getElementById('cShippingCarrier'), document.getElementById('eoShippingCarrier')];
+    selects.forEach(sel => {
+        if(!sel) return;
+        Array.from(sel.options).forEach(opt => { if(opt.className === 'custom-carr') opt.remove(); });
+        customCarriers.forEach(c => { 
+            let opt = document.createElement('option'); 
+            opt.value = c; opt.text = c; opt.className = 'custom-carr'; 
+            sel.appendChild(opt); 
+        });
+    });
+}
+
+function addNewCarrier(isEdit = false) {
+    let newCarr = prompt("Thêm Nhà xe / Đơn vị vận chuyển mới:\n(Ví dụ: Xe Hải Vân, Xe Phương Trang...)");
+    if(!newCarr || !newCarr.trim()) return;
+    newCarr = newCarr.trim();
+    
+    let customCarriers = []; 
+    try { let raw = localStorage.getItem('truongan_custom_carriers'); if(raw) customCarriers = JSON.parse(raw); } catch(e){}
+    
+    if(!customCarriers.includes(newCarr)) {
+        customCarriers.push(newCarr); 
+        localStorage.setItem('truongan_custom_carriers', JSON.stringify(customCarriers));
+        loadCustomCarriers();
+        
+        let selId = isEdit ? 'eoShippingCarrier' : 'cShippingCarrier'; 
+        let sel = document.getElementById(selId); 
+        if(sel) sel.value = newCarr;
+        if(!isEdit && typeof saveDraftLocal === 'function') saveDraftLocal();
+    } else { 
+        alert("Nhà xe này đã tồn tại trong danh sách!"); 
+    }
+}
+
+// --- 5. ĐIỀU HƯỚNG (NAVIGATION) ---
 function showPage(page) {
     try {
         currentPage = page;
@@ -230,7 +270,23 @@ function loadMore(type) {
     if(type === 'cus') { limitCus += 50; if(typeof renderCustomersData === 'function') renderCustomersData(false); }
 }
 
-// --- LOGIC ĐỒNG BỘ DATA ---
+// --- 6. HÀM QUẢN TRỊ HỆ THỐNG CƠ BẢN ---
+function hardResetCache() {
+    if(confirm("Hành động này sẽ XÓA BỘ NHỚ TẠM để tải lại dữ liệu mới nhất từ Sheet.\n\nDùng nút này khi:\n1. Bảng sản phẩm bị trắng.\n2. Cột hiển thị bị lỗi.\n3. Dữ liệu trên Sheet và Web không khớp nhau.\n\nXác nhận xóa và tải lại?")) {
+        localStorage.clear();
+        location.reload(true);
+    }
+}
+
+function handleLogout() {
+    if(confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+        localStorage.removeItem('isLoggedIn'); 
+    }
+}
+
+// --- 7. LOGIC ĐỒNG BỘ DATA (SYNC ENGINE) ---
 function addSyncLog(msg) {
     SYNC_LOG.unshift({ time: new Date().toLocaleString('vi-VN'), msg: msg });
     if(SYNC_LOG.length > 20) SYNC_LOG.pop();
@@ -359,6 +415,7 @@ async function syncData(force = false, isSilent = false) {
     finally { if(ui && !isSilent) ui.style.display = "none"; }
 }
 
+// --- 8. KHỞI TẠO (INITIALIZATION) ---
 document.addEventListener('DOMContentLoaded', () => { 
     if(localStorage.getItem('theme') === 'dark') toggleTheme();
     setTimeout(() => {
@@ -366,22 +423,4 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(checkAndSyncSettings, 3000);
         setInterval(() => { syncData(true, true); }, 3 * 60 * 1000);
     }, 1500); // Trì hoãn một chút để UI load xong
-
 });
-
-// --- HÀM XỬ LÝ SỬA LỖI & ĐĂNG XUẤT ---
-function hardResetCache() {
-    if(confirm("Hành động này sẽ XÓA BỘ NHỚ TẠM để tải lại dữ liệu mới nhất từ Sheet.\n\nDùng nút này khi:\n1. Bảng sản phẩm bị trắng.\n2. Cột hiển thị bị lỗi.\n3. Dữ liệu trên Sheet và Web không khớp nhau.\n\nXác nhận xóa và tải lại?")) {
-        localStorage.clear();
-        location.reload(true);
-    }
-}
-
-function handleLogout() {
-    if(confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
-        document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
-        // Nếu có biến lưu trạng thái đăng nhập thì xóa ở đây
-        localStorage.removeItem('isLoggedIn'); 
-    }
-}
