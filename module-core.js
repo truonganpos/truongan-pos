@@ -366,4 +366,22 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(checkAndSyncSettings, 3000);
         setInterval(() => { syncData(true, true); }, 3 * 60 * 1000);
     }, 1500); // Trì hoãn một chút để UI load xong
+
 });
+
+// --- HÀM XỬ LÝ SỬA LỖI & ĐĂNG XUẤT ---
+function hardResetCache() {
+    if(confirm("Hành động này sẽ XÓA BỘ NHỚ TẠM để tải lại dữ liệu mới nhất từ Sheet.\n\nDùng nút này khi:\n1. Bảng sản phẩm bị trắng.\n2. Cột hiển thị bị lỗi.\n3. Dữ liệu trên Sheet và Web không khớp nhau.\n\nXác nhận xóa và tải lại?")) {
+        localStorage.clear();
+        location.reload(true);
+    }
+}
+
+function handleLogout() {
+    if(confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+        // Nếu có biến lưu trạng thái đăng nhập thì xóa ở đây
+        localStorage.removeItem('isLoggedIn'); 
+    }
+}
