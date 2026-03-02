@@ -1,1 +1,68 @@
+# 🛒 Trường An Store - Smart POS System
 
+Hệ thống quản lý bán hàng (POS) đa nền tảng được thiết kế chuyên biệt cho **Trường An Store**. Hệ thống hoạt động theo mô hình Serverless (Không máy chủ truyền thống), sử dụng kết hợp bộ 3 sức mạnh từ Google và GitHub để tối ưu chi phí 0đ và tốc độ xử lý thời gian thực.
+
+## 📐 Kiến trúc Hệ thống (Architecture)
+1. **Database (Cơ sở dữ liệu):** `Google Sheets` - Nơi lưu trữ an toàn, trực quan, hỗ trợ tính toán bằng hàm và chia sẻ dễ dàng.
+2. **Backend (API Server):** `Google Apps Script` - Đóng vai trò làm cầu nối (Cổng API) nhận lệnh từ Web và đọc/ghi dữ liệu xuống Google Sheets.
+3. **Frontend (Giao diện & Logic):** - `Blogger (XML)`: Đóng vai trò làm khung chứa (Host) vỏ bọc bên ngoài.
+   - `GitHub Pages/Raw`: Hoạt động như một CDN siêu tốc, chứa toàn bộ mã nguồn xử lý thuật toán (Logic) và giao diện (UI Components).
+
+---
+
+## 📂 Cấu trúc File & Giải thích Chức năng
+
+### 1. Khối Backend & Database
+* **`code.gs`**: Chạy trên nền tảng Google Apps Script. 
+  - Xử lý các yêu cầu `GET` (Tải dữ liệu Khách hàng, Sản phẩm, Đơn hàng, Cài đặt về máy).
+  - Xử lý các yêu cầu `POST` (Đồng bộ hàng loạt các thao tác Thêm/Sửa/Xóa từ máy lên Sheet).
+  - Tự động tạo cột mới thông minh nếu trên Sheet chưa có.
+
+### 2. Khối Vỏ (Entry Point)
+* **`main.xml`**: Nằm trên giao diện Blogger. 
+  - Chỉ chứa mã CSS (`<b:skin>`) để làm đẹp ứng dụng, căn chỉnh Reponsive (điện thoại/máy tính).
+  - Khởi tạo các khung `<div>` trống (`view-dashboard`, `view-products`...).
+  - Nạp (Load) toàn bộ các file JS từ GitHub về để đắp vào các khung trống đó.
+
+### 3. Khối Giao diện thành phần (UI Components - Trên GitHub)
+*(Đây là các file chỉ chứa mã HTML của từng trang, giúp file XML gọn nhẹ và không bị lỗi cú pháp)*
+* **`ui-dashboard.js`**: Giao diện tab Tổng quan (Thống kê tiền COD, Doanh thu, Biểu đồ).
+* **`ui-products.js`**: Giao diện tab Kho hàng (Bảng, Thẻ sản phẩm, Thanh công cụ).
+* **`ui-orders.js`**: Giao diện tab Đơn hàng (Lọc trạng thái đơn, Danh sách đơn).
+* **`ui-customers.js`**: Giao diện tab Khách hàng (Danh bạ, Nợ).
+* **`ui-add.js`**: Giao diện tạo đơn hàng (Khung điền khách, chọn bưu cục nhà xe, thêm sản phẩm).
+* **`ui-modals.js`**: Chứa toàn bộ các Popup (Cài đặt máy in, Thêm nhà xe, Cảnh báo trùng mã, Quét QR trả hàng, Sửa đơn).
+
+### 4. Khối Thuật toán (Logic Modules - Trên GitHub)
+* **`module-core.js`**: TRÁI TIM CỦA HỆ THỐNG.
+  - Chứa link API kết nối đến Google Sheets.
+  - Quản lý bộ nhớ đệm (LocalStorage).
+  - Chạy ngầm thuật toán Đồng bộ (Sync) cứ 3 phút/lần hoặc khi mất mạng có lại.
+  - Lưu và tải cấu hình Cài đặt (Độ rộng cột, thông tin máy in, ngân hàng) ngầm lên Sheet `CaiDat`.
+* **`module-dashboard.js`**: Thuật toán vẽ biểu đồ Chart.js, tính toán lợi nhuận, biên lãi, tổng nợ COD đang đi đường và xếp hạng Top bán chạy.
+* **`module-product.js`**: Xử lý logic Thêm/Sửa/Xóa kho hàng, quét mã vạch trùng lặp, gợi ý giá bán thông minh (Tự động tính theo % lợi nhuận).
+* **`module-order.js`**: Thuật toán giỏ hàng, tính phí Ship, gộp/tách mã vận đơn, quy trình xử lý đơn 3 bước (Chờ xử lý -> Đang giao/Gửi xe -> Đã thu COD).
+  - **Đặc biệt:** Tích hợp thuật toán tự động sinh mã QR Ngân Hàng (VietQR) quét tự động điền số tiền và mã đơn khi in hóa đơn.
+* **`module-customer.js`**: Tính toán công nợ theo thời gian thực (Real-time debt), trừ nợ tự động khi thanh toán COD, quản lý thông tin và link Facebook khách.
+* **`module-return.js`**: Luồng trả hàng, cộng lại tiền công nợ cho khách, hoàn lại tồn kho cho hệ thống.
+* **`module-auth.js`**: Cơ chế đăng nhập đơn giản bảo vệ màn hình quản lý.
+
+---
+
+## 🛠️ Hướng dẫn Triển khai & Cập nhật Bản vá (Deploy)
+
+1. **Khi sửa mã Logic hoặc UI trên GitHub:**
+   - Commit (Lưu) file trên GitHub.
+   - Trình duyệt sẽ tự động nhận bản mới sau vài phút (do cache). Để nhận ngay, bấm nút **"🧹 Sửa Lỗi"** trên thanh Menu của phần mềm để xóa Cache hiện tại và tải lại file JS mới.
+   
+2. **Khi thêm tính năng mới liên quan đến dữ liệu (Sửa file `code.gs`):**
+   - Mở Google Apps Script -> Dán mã mới.
+   - **BẮT BUỘC BẤM:** *Triển khai (Deploy)* -> *Quản lý bản triển khai* -> Bấm biểu tượng bút chì (Chỉnh sửa) -> Đổi phiên bản thành **Phiên bản mới (New)** -> Bấm *Triển khai*.
+   - Copy URL Web app (nếu có thay đổi) và dán đè vào biến `const API = "..."` trong file `module-core.js`.
+
+3. **Khi Blogger báo lỗi XML `Reference is not allowed in prolog` hoặc lỗi dấu `&times;`:**
+   - Không dùng thẻ rút gọn như `<div />` hoặc `<script />` bên trong Blogger. Phải dùng thẻ đầy đủ `<div></div>`.
+   - Các ký tự đặc biệt như dấu `X` tắt cửa sổ phải dùng mã thực thể chuẩn (ví dụ: `&#215;`), tuyệt đối không dùng `&times;`.
+
+---
+*Developed & Maintained by Trường An Store.*
