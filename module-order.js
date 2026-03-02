@@ -571,14 +571,22 @@ function renderRecentDrafts() {
     let html = drafts.map(o => {
         let borderColor = o['Trạng Thái'] === 'Nháp' ? '#f59e0b' : '#3b82f6';
         let bgStyle = o['Trạng Thái'] === 'Nháp' ? 'var(--btn-bg, #fffcf8)' : 'var(--btn-bg, #eff6ff)';
-        return `<div style="min-width:280px; max-width:280px; background:${bgStyle}; border:1px dashed ${borderColor}; padding:12px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); color:var(--btn-col, #333);">
-            <b style="color:${borderColor}; font-size:15px;">${o['Tên Khách Hàng']}</b> <span style="font-size:11px; opacity:0.6;">(${o['Mã Đơn']})</span><br/>
-            <span style="font-size:15px; font-weight:bold; color:#ef4444;">${formatMoney(o['Thành Tiền Sau Chiết Khấu'])}</span> 
-            <span style="font-size:12px; opacity:0.7;">(${o['Tổng SP']} SP) - ${o['Trạng Thái']}</span><br/>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <button class="action-btn gray" style="flex:1;" title="In hóa đơn" onclick="printOrder('${o['Mã Đơn']}')">🖨️ In</button>
-                <button class="action-btn orange" style="flex:1.5;" onclick="showPage('orders'); openEditOrderModal('${o['Mã Đơn']}')">✏️ Sửa</button>
-                <button class="action-btn blue" style="flex:1.5;" onclick="markShipping('${o['Mã Đơn']}')">🚚 Gửi Xe</button>
+        
+        // Đã sửa lại cấu trúc thẻ: width: 100%, căn lề 2 bên cực đẹp
+        return `<div style="width:100%; background:${bgStyle}; border:1px dashed ${borderColor}; padding:12px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); color:var(--btn-col, #333); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <b style="color:${borderColor}; font-size:15px;">${o['Tên Khách Hàng']}</b> <span style="font-size:11px; opacity:0.6;">(${o['Mã Đơn']})</span><br/>
+                    <span style="font-size:12px; opacity:0.7;">(${o['Tổng SP']} SP) - ${o['Trạng Thái']}</span>
+                </div>
+                <div style="text-align:right;">
+                    <span style="font-size:16px; font-weight:bold; color:#ef4444;">${formatMoney(o['Thành Tiền Sau Chiết Khấu'])}</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+                <button class="action-btn gray" style="flex:1; padding:8px 5px;" title="In hóa đơn" onclick="printOrder('${o['Mã Đơn']}')">🖨️ In</button>
+                <button class="action-btn orange" style="flex:1.5; padding:8px 5px;" onclick="showPage('orders'); openEditOrderModal('${o['Mã Đơn']}')">✏️ Sửa</button>
+                <button class="action-btn blue" style="flex:1.5; padding:8px 5px;" onclick="markShipping('${o['Mã Đơn']}')">🚚 Gửi Xe</button>
             </div>
         </div>`;
     }).join('');
@@ -668,4 +676,5 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
     if(carrEl) carrEl.value = ''; if(cCodeEl) cCodeEl.value = '';
     let sumEl = document.getElementById("addOrderSummary"); if(sumEl) sumEl.style.display = 'none';
     currentOrderItems = []; renderAddFormUI(); if(currentPage === 'dashboard') renderAdvancedDashboard(); if(currentPage === 'orders') renderOrdersData();
+
 }
