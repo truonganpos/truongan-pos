@@ -5,7 +5,8 @@ const CUSTOMERS_UI = `
           <button class='action-btn blue' onclick='openCustomerModal()'>+ Thêm Mới</button>
       </div>
       <div class='view-toggle'>
-          <button class='vbtn active' onclick='setViewMode("card")'>Thẻ</button><button class='vbtn' onclick='setViewMode("table")'>Bảng</button>
+          <button class='vbtn active' onclick='setViewMode("card")'>Thẻ</button>
+          <button class='vbtn' onclick='setViewMode("table")'>Bảng</button>
       </div>
   </div>
   <div style='display:flex; gap:10px; margin-bottom:15px;'>

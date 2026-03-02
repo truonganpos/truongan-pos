@@ -3,7 +3,7 @@ const ORDERS_UI = `
     <div style='display:flex; gap:10px; align-items:center;'>
         <b style='font-size:16px;'>🧾 ĐƠN HÀNG (<span id='orderCountDisplay'>0</span>)</b>
         <div class='dropdown'>
-            <button class='icon-btn' onclick='toggleDropdown(event, "colMenuOrders")'>&#9881;&#65039; Cột</button>
+            <button class='icon-btn' onclick='toggleDropdown(event, "colMenuOrders")'>⚙️ Cột</button>
             <div class='dropdown-content' id='colMenuOrders'></div>
         </div>
     </div>
@@ -17,7 +17,8 @@ const ORDERS_UI = `
             <option value='Đã hoàn trả'>Đã hoàn trả</option>
         </select>
         <div class='view-toggle'>
-          <button class='vbtn active' onclick='setViewMode("card")'>Thẻ</button><button class='vbtn' onclick='setViewMode("table")'>Bảng</button>
+          <button class='vbtn active' onclick='setViewMode("card")'>Thẻ</button>
+          <button class='vbtn' onclick='setViewMode("table")'>Bảng</button>
         </div>
     </div>
   </div>

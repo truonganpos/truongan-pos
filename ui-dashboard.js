@@ -14,15 +14,17 @@ const DASHBOARD_UI = `
      </div>
      <div class='dashboard-metric'>
         <span style='font-size:30px;'>📈</span><br>
-        <span style='font-weight:600; font-size:13px; opacity:0.8;'>LỢI NHUẬN TẠM TÍNH</span><br>
+        <span style='font-weight:600; font-size:13px; opacity:0.8;'>LỢI NHUẬN</span><br>
         <span id='dashProfit' style='font-size:24px; font-weight:bold; color:#10b981; display:block; margin-top:8px;'>0 đ</span>
         <span id='dashMargin' style='font-size:12px; opacity:0.8; margin-top:5px;'>Biên lãi: 0%</span>
      </div>
+     
      <div class='dashboard-metric cod-card'>
         <span style='font-size:30px;'>🚚</span><br>
         <span style='font-weight:600; font-size:13px; color:#f59e0b;'>CHỜ THU COD (ĐI VẮNG)</span><br>
         <span id='dashCOD' style='font-size:24px; font-weight:bold; color:#f59e0b; display:block; margin-top:8px;'>0 đ</span>
      </div>
+
      <div class='dashboard-metric'>
         <span style='font-size:30px;'>📉</span><br>
         <span style='font-weight:600; font-size:13px; opacity:0.8;'>CHI PHÍ VỐN</span><br>
