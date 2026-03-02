@@ -67,11 +67,10 @@ const ADD_UI = `
         <button class='action-btn blue' onclick='handleAddOrder("Chờ xử lý")' style='padding:14px; font-size:14px; flex:2;'>XÁC NHẬN TẠO ĐƠN</button>
     </div>
 
-    <div id='recentDraftsZone' style='margin-top:30px; border-top:2px dashed #ccc; padding-top:20px; display:none;'>
+  <div id='recentDraftsZone' style='margin-top:30px; border-top:2px dashed #ccc; padding-top:20px; display:none;'>
         <h4 style='margin:0 0 10px 0; color:#f59e0b;'>🕒 CÁC ĐƠN SỈ / NHÁP ĐANG CHỜ GỘP:</h4>
-        <div id='recentDraftsList' style='display:flex; gap:15px; overflow-x:auto; padding-bottom:15px;'></div>
+        <div id='recentDraftsList' style='display:flex; flex-direction:column; gap:12px; max-height:400px; overflow-y:auto; padding-right:5px;'></div>
     </div>
-  </div>
 `;
 
 document.addEventListener('DOMContentLoaded', () => {
