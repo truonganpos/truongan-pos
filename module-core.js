@@ -418,9 +418,13 @@ async function syncData(force = false, isSilent = false) {
 // --- 8. KHỞI TẠO (INITIALIZATION) ---
 document.addEventListener('DOMContentLoaded', () => { 
     if(localStorage.getItem('theme') === 'dark') toggleTheme();
+    
+    // Ép hệ thống mở thẳng Tab Tổng quan ngay khi vừa load xong HTML
+    showPage('dashboard'); 
+    
     setTimeout(() => {
         if(typeof syncData === 'function') syncData(ALL_PRODUCTS.length === 0);
         setInterval(checkAndSyncSettings, 3000);
         setInterval(() => { syncData(true, true); }, 3 * 60 * 1000);
-    }, 1500); // Trì hoãn một chút để UI load xong
+    }, 1500); 
 });
