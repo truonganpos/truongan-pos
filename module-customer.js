@@ -187,7 +187,7 @@ function openCustomerModal(phone = '') {
     if(phone) {
         let cus = ALL_CUSTOMERS.find(c => cleanPhone(c['Điện thoại']) === cleanPhone(phone));
         if(cus) {
-            if(op) op.value = phone; if(ep) ep.value = phone; if(en) en.value = cus['Tên khách hàng'] || cus['Tên KH'] || '';
+            if(op) op.value = phone; if(ep) ep.value = phone; if(en) en.value = cus['Tên KH'] || cus['Tên KH'] || '';
             if(ea) ea.value = cus['Địa Chỉ'] || ''; if(ed) ed.value = cus['Nợ Đầu Kỳ'] || 0;
             if(et) et.value = cus['Nhóm KH'] || 'Khách Lẻ';
             if(eFB) eFB.value = cus['Link FB'] || '';
@@ -208,7 +208,7 @@ function saveCustomer() {
     let inputDebt = eD ? (Number(eD.value) || 0) : 0;
     
     let newCus = {
-        "Mã khách hàng": "", "Tên khách hàng": eN ? eN.value : '', "Điện thoại": phone, "Địa Chỉ": eA ? eA.value : '',
+        "Mã khách hàng": "", "Tên KH": eN ? eN.value : '', "Điện thoại": phone, "Địa Chỉ": eA ? eA.value : '',
         "Nhóm KH": eT ? eT.value : 'Khách Lẻ', 
         "Nợ Đầu Kỳ": inputDebt, "Đã Thu Nợ": 0, "Tổng Nợ Thực Tế": inputDebt, 
         "Tổng đơn hàng": 0, "Tổng mua": 0, "Link FB": eFB ? eFB.value : ''
@@ -243,7 +243,7 @@ function openPayDebtModal(phone) {
     let cus = ALL_CUSTOMERS.find(c => cleanPhone(c['Điện thoại']) === cleanPhone(phone)); if(!cus) return;
     let stats = calcCustomerStats(phone);
     document.getElementById('payDebtPhone').value = cleanPhone(phone);
-    document.getElementById('payDebtName').innerText = cus['Tên khách hàng'] || cus['Tên KH'] || phone;
+    document.getElementById('payDebtName').innerText = cus['Tên KH'] || cus['Tên KH'] || phone;
     
     let isRefund = stats.currentDebt < 0;
     document.getElementById('payDebtIsRefund').value = isRefund ? '1' : '0';
