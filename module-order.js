@@ -31,14 +31,14 @@ function renderOrdersData(resetLimit = false) {
         
         let sliced = filtered.slice(0, limitOrd);
         let keys = Object.keys(ALL_ORDERS[0] || {}); let vis = keys.filter(k => !hiddenColsOrders[k]);
-        let essentialCols = ['Mã Đơn', 'Tên Khách Hàng', 'SDT', 'Tổng Tiền', 'TT Sau CK'];
+        let essentialCols = ['Mã Đơn', 'Tên Khách Hàng', 'SDT', 'Tổng Tiền', 'Thành Tiền Sau Chiết Khấu'];
         
         let html = viewMode === 'table' ? `<div class="table-responsive"><table><thead><tr><th class="col-check"><input type="checkbox" onclick="toggleAllOrderChecks(this)"/></th>` : `<div class="data-grid">`;
         if(viewMode === 'table') {
             vis.forEach(k => { 
                 let cCls = essentialCols.includes(k) ? '' : 'hide-on-mobile';
                 if(k==='Mã Đơn') cCls += ' col-id'; if(k==='SDT') cCls += ' col-phone';
-                if(k==='Tổng Tiền' || k==='Khách Thanh Toán' || k==='TT Sau CK' || k==='Còn Nợ' || k==='Phí Ship') cCls += ' col-money text-right';
+                if(k==='Tổng Tiền' || k==='Khách Thanh Toán' || k==='Thành Tiền Sau Chiết Khấu' || k==='Còn Nợ' || k==='Phí Ship') cCls += ' col-money text-right';
                 if(k!=='Chi Tiết JSON') html += `<th class="${cCls.trim()}" title="${k}">${k}</th>`; 
             });
             html += `<th class="col-action text-center" style="min-width:180px;">Tác vụ</th></tr></thead><tbody>`;
@@ -80,7 +80,7 @@ function renderOrdersData(resetLimit = false) {
               actionBtns = `<button class="action-btn gray" style="padding:6px; flex:1;" title="In" onclick="printOrder('${maDon}')">🖨️</button>` + actionBtns;
               if(!isDelivered) { actionBtns += `<button class="action-btn red" style="padding:6px; flex:1;" onclick="deleteOrder('${maDon}')">🗑️</button>`; }
 
-              let finalTotalVal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
+              let finalTotalVal = Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
 
               if(viewMode === 'table') {
                  html += `<tr><td class="col-check"><input type="checkbox" class="chk-order-box" value="${maDon}"/></td>`;
@@ -92,8 +92,8 @@ function renderOrdersData(resetLimit = false) {
                        
                        if(k === 'Mã Đơn') { val = `<span onclick="openOrderModal('${maDon}')" style="color:#3b82f6; font-weight:bold; cursor:pointer; text-decoration:underline;">${o['Mã Đơn']}</span>`; }
                        else if(k === 'Tên Khách Hàng') { val = `<span onclick="filterOrdersByCustomer('${sdtTrim}')" style="color:#3b82f6; font-weight:bold; cursor:pointer;" title="Lọc đơn khách này">${o[k]||''}</span> ${vipBadge}`; }
-                       else if(k === 'CK %') { let valNum = Number(o[k] || 0); if (valNum > 0) { val = `<span class="price-text">-${valNum}%</span>`; } else { val = '0%'; } }
-                       else if(k === 'TT Sau CK') { val = `<b class="price-text" style="color:#10b981;">${formatMoney(finalTotalVal)}</b>`; }
+                       else if(k === 'Chiết Khấu %') { let valNum = Number(o[k] || 0); if (valNum > 0) { val = `<span class="price-text">-${valNum}%</span>`; } else { val = '0%'; } }
+                       else if(k === 'Thành Tiền Sau Chiết Khấu') { val = `<b class="price-text" style="color:#10b981;">${formatMoney(finalTotalVal)}</b>`; }
                        else if(k === 'Trạng Thái') {
                            let bg = isDelivered ? '#d1fae5' : (isShipping ? '#e0f2fe' : (isDraft ? '#fef3c7' : '#fce7f3'));
                            let cl = isDelivered ? '#10b981' : (isShipping ? '#0284c7' : (isDraft ? '#f59e0b' : '#be185d'));
@@ -112,7 +112,7 @@ function renderOrdersData(resetLimit = false) {
                     if(!['Mã Đơn', 'Trạng Thái', 'Chi Tiết JSON'].includes(k)) {
                        let isMoney = (String(k).toLowerCase().includes('tiền') || String(k).toLowerCase().includes('thanh toán') || String(k).toLowerCase().includes('nợ') || String(k).toLowerCase().includes('phí'));
                        let val = isMoney ? `<span class="price-text">${formatMoney(o[k])}</span>` : (o[k] || ''); let titleVal = String(o[k] || '').replace(/"/g, '&quot;');
-                       if(k === 'TT Sau CK') { val = `<span class="price-text" style="color:#10b981;">${formatMoney(finalTotalVal)}</span>`; }
+                       if(k === 'Thành Tiền Sau Chiết Khấu') { val = `<span class="price-text" style="color:#10b981;">${formatMoney(finalTotalVal)}</span>`; }
                        if(k === 'Tên Khách Hàng') { val = `<span onclick="filterOrdersByCustomer('${sdtTrim}')" style="color:#3b82f6; font-weight:bold; cursor:pointer;">${o[k]||''}</span> ${vipBadge}`; }
                        html += `<div class="card-row"><span class="lbl">${k}:</span> <span class="val" title="${titleVal}">${val}</span></div>`;
                     }
@@ -140,7 +140,7 @@ function markCollectedCOD(id) {
     if(isOrderProcessing) return; isOrderProcessing = true;
     let o = ALL_ORDERS.find(x => x['Mã Đơn'] === id);
     if(o) {
-        let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
+        let finalTotal = Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
         o['Khách Thanh Toán'] = finalTotal; o['Còn Nợ'] = 0; o['Trạng Thái'] = 'Đã giao';
 
         if(o['Chi Tiết JSON']) {
@@ -212,8 +212,8 @@ function printOrder(id) {
     let sAddr = s.storeAddress ? `ĐC: ${s.storeAddress}<br>` : '';
     let sNote = s.billNote ? String(s.billNote).replace(/\n/g, '<br>') : 'Cảm ơn quý khách!<br>Hẹn gặp lại.';
 
-    let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
-    let chietKhauPct = Number(o['CK %'] || 0); let tongTienHang = Number(String(o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); let tienGiam = tongTienHang - finalTotal;
+    let finalTotal = Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
+    let chietKhauPct = Number(o['Chiết Khấu %'] || 0); let tongTienHang = Number(String(o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); let tienGiam = tongTienHang - finalTotal;
     let paid = Number(String(o['Khách Thanh Toán']||0).replace(/[^0-9\-]/g,"")); let debtThisOrder = finalTotal - paid;
     let shipFee = Number(o['Phí Ship'] || 0); let shipInfo = o['Thông পুরা tin Giao hàng'] || '';
     
@@ -271,7 +271,7 @@ function openOrderModal(id) {
     let rawTotal = 0;
     if(o['Chi Tiết JSON']) { try { JSON.parse(String(o['Chi Tiết JSON'])).forEach(i => { rawTotal += i.thanhTien; html += `<div class="order-item-row"><div style="flex:1;"><b>[${i.maSP}] ${i.tenSP}</b> <br/><span style="font-size:12px; color:#64748b;">${formatMoney(i.giaBan)} x ${i.soLuong}</span></div><div style="font-weight:bold; color:#0070f4; display:flex; align-items:center;">${formatMoney(i.thanhTien)}</div></div>`; }); } catch(e) {} }
     
-    let chietKhau = Number(o['CK %']||0); let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
+    let chietKhau = Number(o['Chiết Khấu %']||0); let finalTotal = Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
     let shipFee = Number(o['Phí Ship'] || 0);
 
     html += `</div><div class="order-detail-box"><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;"><span>Tổng tiền hàng:</span> <b>${formatMoney(rawTotal)}</b></div>`;
@@ -292,7 +292,7 @@ function openEditOrderModal(id) {
     let ep = document.getElementById("eoPhone"); if(ep) ep.value = o['SDT'] || '';
     let ea = document.getElementById("eoAddress"); if(ea) ea.value = o['Địa Chỉ'] || ''; 
     let eno = document.getElementById("eoNote"); if(eno) eno.value = o['Ghi Chú'] || '';
-    let ed = document.getElementById("eoDiscount"); if(ed) ed.value = o['CK %'] || '';
+    let ed = document.getElementById("eoDiscount"); if(ed) ed.value = o['Chiết Khấu %'] || '';
     let epa = document.getElementById("eoPaid"); if(epa) epa.value = o['Khách Thanh Toán'] || 0;
     
     let eShipFee = document.getElementById("eoShippingFee"); if(eShipFee) eShipFee.value = o['Phí Ship'] || '';
@@ -343,8 +343,8 @@ function saveEditOrder() {
     finalTotal += shipFee; 
     let tongCong = finalTotal + oldDebtRecord; let newDebt = tongCong - paid;
 
-    o['Loại Đơn'] = "APP - " + cusType; o['CK %'] = disc; o['Tổng SP'] = totalItems; o['Tổng Tiền'] = rawTotal; 
-    o['TT Sau CK'] = finalTotal; o['Phí Ship'] = shipFee; o['Thông tin Giao hàng'] = shipInfo;
+    o['Loại Đơn'] = "APP - " + cusType; o['Chiết Khấu %'] = disc; o['Tổng SP'] = totalItems; o['Tổng Tiền'] = rawTotal; 
+    o['Thành Tiền Sau Chiết Khấu'] = finalTotal; o['Phí Ship'] = shipFee; o['Thông tin Giao hàng'] = shipInfo;
     delete o['Thành Tiền Sau CK']; 
     o['Khách Thanh Toán'] = paid; o['Còn Nợ'] = newDebt; o['Chi Tiết JSON'] = JSON.stringify(currentOrderItems);
 
@@ -619,7 +619,7 @@ function renderRecentDrafts() {
                     <span style="font-size:12px; opacity:0.7;">(${o['Tổng SP']} SP) - ${o['Trạng Thái']}</span>
                 </div>
                 <div style="text-align:right;">
-                    <span style="font-size:16px; font-weight:bold; color:#ef4444;">${formatMoney(o['TT Sau CK'])}</span>
+                    <span style="font-size:16px; font-weight:bold; color:#ef4444;">${formatMoney(o['Thành Tiền Sau Chiết Khấu'])}</span>
                 </div>
             </div>
             <div style="display:flex; gap:8px;">
@@ -682,7 +682,7 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
     let newOrder = { 
         "Mã Đơn": mockId, "Thời Gian": createTime, "Tên Khách Hàng": cName || 'Đơn Nháp', "SDT": cPhoneClean, 
         "Địa Chỉ": aEl ? aEl.value : '', "Phí Ship": shipFee, "Thông tin Giao hàng": shipInfo, "Ghi Chú": noEl ? noEl.value : '', "Tổng SP": totalItems, "Tổng Tiền": rawTotal, 
-        "CK %": discountPct, "TT Sau CK": finalTotal, "Chi Tiết JSON": JSON.stringify(currentOrderItems), 
+        "Chiết Khấu %": discountPct, "Thành Tiền Sau Chiết Khấu": finalTotal, "Chi Tiết JSON": JSON.stringify(currentOrderItems), 
         "Trạng Thái": orderStatus, "Khách Thanh Toán": paid, "Còn Nợ": debt, "Loại Đơn": loaiDon 
     };
 
