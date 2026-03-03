@@ -5,14 +5,16 @@ const MODALS_UI = `
   <div class='modal-content'>
     <button class='close-btn' onclick='closeModal("settingsModal")'>&#215;</button>
     <h2 style='margin-top:0; color:#3b82f6; font-size:18px;'>⚙️ CÀI ĐẶT HÓA ĐƠN & THANH TOÁN</h2>
-    <div style='background:var(--btn-bg, #f8fafc); padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px;'>
-        <b style='display:block; margin-bottom:10px; color:#333;'>THÔNG TIN IN TRÊN BILL</b>
+    
+    <div class='summary-box' style='margin-bottom:15px;'>
+        <b style='display:block; margin-bottom:10px; color:inherit;'>THÔNG TIN IN TRÊN BILL</b>
         <label style='font-size:12px; opacity:0.8;'>Tên cửa hàng</label><input class='form-inp' id='setStoreName' placeholder='VD: TRƯỜNG AN STORE' type='text'>
         <label style='font-size:12px; opacity:0.8;'>Số điện thoại trên Bill</label><input class='form-inp' id='setStorePhone' placeholder='VD: 0987.xxx.xxx' type='text'>
         <label style='font-size:12px; opacity:0.8;'>Địa chỉ cửa hàng</label><input class='form-inp' id='setStoreAddress' placeholder='Tòa A, Khu B...' type='text'>
         <label style='font-size:12px; opacity:0.8;'>Lời cảm ơn cuối Bill</label><textarea class='form-inp' id='setBillNote' rows='2'></textarea>
     </div>
-    <div style='background:var(--btn-bg, #f0fdf4); padding:15px; border-radius:8px; border:1px solid #bbf7d0;'>
+
+    <div class='auto-calc-box' style='display:block;'>
         <b style='display:block; margin-bottom:10px; color:#10b981;'>THIẾT LẬP MÃ QR NGÂN HÀNG</b>
         <p style='font-size:12px; opacity:0.8; margin-top:0;'>Điền chính xác để hệ thống tự tạo mã QR quét tự động điền số tiền trên hóa đơn.</p>
         <div class='form-grid-2'>
@@ -21,6 +23,7 @@ const MODALS_UI = `
             <div class='form-grid-full'><label style='font-size:12px;'>Tên Chủ Tài Khoản</label><input class='form-inp' id='setAccName' placeholder='VD: NGUYEN TRUONG AN' type='text'></div>
         </div>
     </div>
+
     <button class='action-btn blue' onclick='saveSettingsInfo()' style='padding:12px; width:100%; margin-top:15px;'>💾 LƯU CÀI ĐẶT</button>
   </div>
 </div>
