@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html>
 <html b:version='2' class='v2' expr:dir='data:blog.languageDirection' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
-
 <head>
 <b:include data='blog' name='all-head-content'/>
 <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'/>
 <title>Trường An Store - Hệ Thống Quản Lý POS</title>
-
-<script src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' type='text/javascript'/>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' type='text/javascript'></script>
 
 <b:skin><![CDATA[
-/* =========================================
-   PHẦN 1: CORE UI VÀ HEADER (FULL MÀN HÌNH)
-========================================= */
+/* CORE UI VÀ HEADER */
 body, html { margin:0; padding:0; font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:#f4f6fb; color:#333; overflow-x: hidden; width: 100%; }
 body { padding-bottom:70px; padding-top:60px; transition: background 0.3s, color 0.3s; }
 * { box-sizing: border-box; max-width: 100%; }
 
 .header { background:linear-gradient(135deg,#0070f4,#00c6ff); color:#fff; padding:10px 15px; display:flex; justify-content:space-between; align-items:center; position:fixed; top:0; left:0; width:100%; z-index:999; box-shadow:0 2px 10px rgba(0,0,0,0.15); transition: background 0.3s;}
 .header-title { font-weight:bold; font-size:18px; white-space:nowrap; letter-spacing: 1px; flex-shrink: 0;}
-
 .header-btns { display:flex; gap:8px; align-items:center; overflow-x:auto; white-space:nowrap; padding-bottom: 2px; -ms-overflow-style: none; scrollbar-width: none; justify-content: flex-end; flex: 1; margin-left: 10px;}
 .header-btns::-webkit-scrollbar { display: none; } 
 .icon-btn { background:rgba(255,255,255,0.2); border:none; color:#fff; padding:8px 10px; border-radius:8px; cursor:pointer; font-size:14px; display:flex; align-items:center; gap:5px; position:relative; transition:0.2s; font-weight:600;}
@@ -30,7 +25,6 @@ body { padding-bottom:70px; padding-top:60px; transition: background 0.3s, color
 .nav div { font-size:22px; cursor:pointer; padding:5px 15px; border-radius:10px; transition:0.2s; text-align:center; flex:1; color:#555; }
 .nav div:hover { background:#f0f4f8; }
 .nav div.active { color:#0070f4; font-weight:bold; }
-
 .section { padding:15px; width:100%; max-width:100%; margin:0 auto; overflow-x: hidden;}
 .view-section { display:none; width: 100%;} 
 
@@ -38,45 +32,36 @@ body { padding-bottom:70px; padding-top:60px; transition: background 0.3s, color
 .spinner { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top-color: #0070f4; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* =========================================
-   PHẦN 2: BẢNG VÀ THẺ TỰ ĐỘNG CO GIÃN
-========================================= */
+/* DASHBOARD & THẺ */
 .tab-search-bar { width:100%; padding:12px 15px; border-radius:8px; border:1px solid #ddd; outline:none; font-size:14px; background:#fff; margin-bottom: 15px; transition:0.2s;}
 .tab-search-bar:focus { border-color:#0070f4; box-shadow:0 0 0 2px rgba(0,112,244,0.1); }
-
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .dashboard-metric { min-height: 140px; display: flex; flex-direction: column; justify-content: center; padding: 20px; text-align: center; overflow: hidden; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); transition: background 0.3s, border-color 0.3s;}
-
 .cod-card { border: 1px dashed #f59e0b; background: #fffcf8; }
-body.dark-theme .cod-card { background: #451a03; border-color: #d97706; }
-
+.draft-card { background: #fffcf8; border: 1px dashed #f59e0b; }
+.pending-card { background: #eff6ff; border: 1px dashed #3b82f6; }
 .chart-container { height: 280px; position: relative; width: 100%; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); padding:20px; transition: background 0.3s, border-color 0.3s;}
 
 .data-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:15px; width: 100%;}
 .card { background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); display:flex; flex-direction:column; border:1px solid #f0f0f0; position:relative; transition: background 0.3s, border-color 0.3s; width: 100%; overflow: hidden;}
 .dash-col { flex: 1; min-width: 300px; }
-
 .card-img-top { width:100%; height:200px; object-fit:contain; border-radius:8px; margin-bottom:12px; border:1px solid #eee; cursor:pointer; background:#fafafa; order:-1; }
 .card-header { font-size:15px; font-weight:bold; color:#0070f4; border-bottom:1px dashed #eee; padding-bottom:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
 .card-row { display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px; }
 .card-row .lbl { color:#666; font-size:13px; min-width: 80px;}
 .card-row .val { font-weight:500; text-align:right; max-width:65%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
-.btn-edit-tiny { position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.9); border:1px solid #eee; border-radius:50%; width:32px; height:32px; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size:14px; z-index:10; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:0.2s; color:#0070f4; }
-
-/* ĐÃ FIX: GHIM TIÊU ĐỀ BẢNG, CUỘN TRONG BẢNG */
+/* BẢNG (TABLE) - ĐÃ FIX GHIM TIÊU ĐỀ */
 .table-responsive { width:100%; background:#fff; border-radius:10px; border:1px solid #f0f0f0; transition: background 0.3s; overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 210px); -webkit-overflow-scrolling: touch; }
 table { width:100%; border-collapse:collapse; min-width: max-content; }
 th, td { padding: 12px 10px; text-align: left; vertical-align: middle; box-sizing: border-box; white-space: nowrap;}
 th { background:#4285f4; color:#fff; font-weight:600; font-size:13px; border:none; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 td { border-bottom:1px solid #eee; font-size:13px; }
 tr:hover { background:#f8fafc; }
-
 th.text-center, td.text-center { text-align: center; }
 th.text-right, td.text-right { text-align: right; }
-th.text-left, td.text-left { text-align: left; }
-th.col-check, td.col-check { width: 40px; text-align: center; }
-th.col-action, td.col-action { min-width: 120px; text-align: center; }
+.col-check { width: 40px; text-align: center; }
+.col-action { min-width: 120px; text-align: center; }
 td.actions { display:flex; gap:5px; align-items:center; justify-content:center; border-bottom:none; padding-bottom:0;}
 
 .col-id { min-width: 110px; } .col-phone { min-width: 120px; } .col-money { min-width: 120px; text-align: right; }
@@ -86,7 +71,6 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
 
 .resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; user-select: none; z-index: 11; height: 100%; }
 .resizer:hover, .resizing { border-right: 2px solid #fff; background: rgba(255,255,255,0.2); }
-
 .editable-cell { cursor:text; border:1px dashed transparent; padding:4px 8px !important; border-radius:4px; transition:0.2s; }
 .editable-cell:focus { background:inherit; border-color:#0070f4; outline:none; box-shadow:0 0 0 2px rgba(0,112,244,0.1); }
 .cat-cell-inline { cursor:pointer; font-weight:500; transition:0.2s; }
@@ -101,11 +85,10 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
     #inlineCatMenu input[type="text"] { font-size: 12px !important; padding: 8px !important; }
 }
 
+/* ĐÃ FIX: Menu cột không bị lấp ở viền trái */
 #colMenuOrders, #colMenuProducts { max-height: none !important; overflow: visible !important; min-width: 320px; left: 0 !important; right: auto !important; }
 
-/* =========================================
-   PHẦN 4: TỐI ƯU CĂN CHỈNH CHO ĐIỆN THOẠI (ÉP BUỘC)
-========================================= */
+/* TỐI ƯU CĂN CHỈNH CHO ĐIỆN THOẠI (ÉP BUỘC) */
 @media (max-width: 850px) { 
     .section { padding: 10px; } 
     th, td { padding: 10px 8px; font-size: 12px; } 
@@ -121,6 +104,7 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
     .modal { padding: 10px; align-items: flex-start; padding-top: 30px;} 
     .modal-content { width: 100% !important; max-width: 100% !important; max-height: 85vh !important; padding: 15px !important; margin: 0 !important;}
     
+    /* ĐÃ FIX: Biến menu cột thành Popup to giữa màn hình trên Mobile */
     #inlineCatMenu, .dropdown-content {
         position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
         width: 90vw !important; max-width: 350px !important; max-height: 80vh !important; overflow-y: auto !important;
@@ -128,9 +112,7 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
     }
 }
 
-/* =========================================
-   PHẦN 5: CÁC NÚT BẤM, FORM VÀ MODAL
-========================================= */
+/* NÚT BẤM, FORM VÀ MODAL */
 .sub-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:#fff; padding:10px 15px; border-radius:10px; flex-wrap:wrap; gap:10px; box-shadow:0 1px 4px rgba(0,0,0,0.05); transition:background 0.3s; width: 100%;}
 .view-toggle { display:flex; background:#f0f2f5; border-radius:20px; overflow:hidden; padding:3px; }
 .view-toggle button { padding:6px 15px; border:none; background:transparent; cursor:pointer; font-size:13px; border-radius:18px; font-weight:600; color:#555;}
@@ -185,8 +167,6 @@ input.form-inp:focus, textarea.form-inp:focus { border-color:#0070f4; box-shadow
 .debt-badge { background:#fee2e2; color:#ef4444; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; }
 
 .cus-card { display:flex; flex-direction:column; background:#fff; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; transition:0.3s; position:relative; width: 100%;}
-.cus-avt-small { width:35px; height:35px; border-radius:50%; background:#0070f4; color:#fff; display:flex; justify-content:center; align-items:center; font-size:16px; font-weight:bold; flex-shrink:0; }
-
 .return-zone-box { background:#fef2f2; padding:15px; border-radius:8px; border:1px solid #fecaca; margin-bottom:15px; transition:0.3s; width: 100%;}
 .return-list-box { min-height:100px; max-height:250px; overflow-y:auto; border:1px solid #ccc; border-radius:8px; padding:10px; margin-bottom:15px; background:#fff; transition:0.3s; width: 100%;}
 .return-total-box { display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px; transition:0.3s; width: 100%;}
@@ -201,9 +181,10 @@ body.dark-theme .nav { background: #1e293b; border-top: 1px solid #334155; box-s
 body.dark-theme .nav div { color:#cbd5e1; }
 body.dark-theme .nav div.active { color:#38bdf8; }
 body.dark-theme .nav div:hover { background:#334155; }
-body.dark-theme .card, body.dark-theme .cus-card, body.dark-theme .modal-content, body.dark-theme .sub-toolbar, body.dark-theme .table-responsive, body.dark-theme .chart-container, body.dark-theme .dashboard-metric { background: #1e293b; border:1px solid #334155; color: #f8fafc; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);}
+body.dark-theme .card, body.dark-theme .cus-card, body.dark-theme .modal-content, body.dark-theme .sub-toolbar, body.dark-theme .table-responsive, body.dark-theme .chart-container, body.dark-theme .dashboard-metric { background: #1e293b; border:1px solid #334155; color: #f8fafc;}
 
-body.dark-theme .cod-card { background: #451a03 !important; border-color: #d97706 !important; color: #f8fafc !important; }
+body.dark-theme .cod-card, body.dark-theme .draft-card { background: #451a03 !important; border-color: #d97706 !important; color: #f8fafc !important; }
+body.dark-theme .pending-card { background: #1e3a8a !important; border-color: #3b82f6 !important; color: #f8fafc !important; }
 
 body.dark-theme input.form-inp, body.dark-theme select.form-inp, body.dark-theme textarea.form-inp, body.dark-theme .tab-search-bar, body.dark-theme .item-edit-input, body.dark-theme .inline-km-inp { background: #334155; color: #f8fafc; border-color: #475569; }
 body.dark-theme table { color: #f8fafc; border-color: #334155; }
@@ -212,10 +193,6 @@ body.dark-theme td { border-color: #334155; }
 body.dark-theme tr:hover { background: #334155; }
 body.dark-theme .card-header { color:#38bdf8; border-color:#334155; }
 body.dark-theme .card-row .lbl { color:#cbd5e1; }
-body.dark-theme .cus-card-header { border-color:#334155; }
-body.dark-theme .cus-info h4 { color:#f8fafc; }
-body.dark-theme .cus-info span { color:#94a3b8; }
-body.dark-theme .cus-stats { background: #0f172a; }
 body.dark-theme .suggest-box, body.dark-theme .dropdown-content { background: #1e293b; border-color: #475569; color:#f8fafc; }
 body.dark-theme .suggest-item, body.dark-theme .dropdown-content label { border-color:#334155; color:#f8fafc; }
 body.dark-theme .suggest-item:hover, body.dark-theme .cat-cell-inline:hover { background: #38bdf8; color:#fff;}
@@ -254,17 +231,15 @@ body.dark-theme .dup-group-list { border-color: #475569; }
 <body>
   <b:section id='main' showaddelement='yes'>
     <b:widget id='HTML1' locked='false' title='Smart POS' type='HTML' version='1'>
-      <b:widget-settings>
-        <b:widget-setting name='content'/>
-      </b:widget-settings>
+      <b:widget-settings><b:widget-setting name='content'></b:widget-setting></b:widget-settings>
       <b:includable id='main'>
 
-        <div class='view-section' id='view-dashboard'/>
-        <div class='view-section' id='view-products'/>
-        <div class='view-section' id='view-orders'/>
-        <div class='view-section' id='view-customers'/>
-        <div class='view-section' id='view-add'/>
-        <div id='modal-container'/> 
+        <div class='view-section' id='view-dashboard'></div>
+        <div class='view-section' id='view-products'></div>
+        <div class='view-section' id='view-orders'></div>
+        <div class='view-section' id='view-customers'></div>
+        <div class='view-section' id='view-add'></div>
+        <div id='modal-container'></div> 
 
         <div class='header'>
           <div class='header-title'>TRƯỜNG AN STORE</div>
@@ -281,57 +256,37 @@ body.dark-theme .dup-group-list { border-color: #475569; }
         </div>
 
         <div class='nav'>
-          <div id='nav-dashboard' onclick='showPage(&quot;dashboard&quot;)' title='Tổng quan'>🏠</div>
-          <div id='nav-products' onclick='showPage(&quot;products&quot;)' title='Kho hàng'>📦</div>
-          <div id='nav-orders' onclick='showPage(&quot;orders&quot;)' title='Đơn hàng'>🧾</div>
-          <div id='nav-customers' onclick='showPage(&quot;customers&quot;)' title='Khách hàng'>👥</div>
-          <div id='nav-add' onclick='showPage(&quot;add&quot;)' title='Tạo đơn'>&#10133;</div>
+          <div id='nav-dashboard' onclick='showPage(&quot;dashboard&quot;)'>🏠</div>
+          <div id='nav-products' onclick='showPage(&quot;products&quot;)'>📦</div>
+          <div id='nav-orders' onclick='showPage(&quot;orders&quot;)'>🧾</div>
+          <div id='nav-customers' onclick='showPage(&quot;customers&quot;)'>👥</div>
+          <div id='nav-add' onclick='showPage(&quot;add&quot;)'>&#10133;</div>
         </div>
 
-        <div id='loadingUI'>
-            <div class='spinner'/>
-            <div id='loadingText'>Đang kết nối hệ thống...</div>
-        </div>
+        <div id='loadingUI'><div class='spinner'></div><div id='loadingText'>Đang kết nối hệ thống...</div></div>
 
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-core.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-auth.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-dashboard.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-product.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-order.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-customer.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-return.js'/>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-core.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-auth.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-dashboard.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-product.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-order.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-customer.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-return.js'></script>
 
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-dashboard.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-products.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-orders.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-customers.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-add.js'/>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-modals.js'/>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-dashboard.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-products.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-orders.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-customers.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-add.js'></script>
+        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-modals.js'></script>
 
         <script type='text/javascript'>
         //<![CDATA[
         document.addEventListener('DOMContentLoaded', () => { 
             let ui = document.getElementById("loadingUI"); 
             if(ui) ui.style.display = "flex";
-            
-            setTimeout(() => {
-                let mContainer = document.getElementById('modal-container');
-                if(mContainer && typeof MODALS_UI !== 'undefined') {
-                    mContainer.innerHTML = MODALS_UI;
-                }
-            }, 300);
-
-            setTimeout(() => {
-                if(typeof ALL_PRODUCTS === 'undefined') {
-                    alert("Lỗi: Không kết nối được với GitHub! Vui lòng ấn F5 hoặc kiểm tra lại đường truyền.");
-                    if(ui) ui.style.display = "none";
-                    return;
-                }
-                
-                if(typeof syncData === 'function') {
-                    syncData(ALL_PRODUCTS.length === 0);
-                }
-            }, 1500); 
+            setTimeout(() => { let mContainer = document.getElementById('modal-container'); if(mContainer && typeof MODALS_UI !== 'undefined') mContainer.innerHTML = MODALS_UI; }, 300);
+            setTimeout(() => { if(typeof ALL_PRODUCTS === 'undefined') { alert("Lỗi mạng! Không tải được file từ GitHub."); if(ui) ui.style.display = "none"; return; } if(typeof syncData === 'function') { syncData(ALL_PRODUCTS.length === 0); } }, 1500); 
         });
         //]]>
         </script>
