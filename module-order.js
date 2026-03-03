@@ -41,7 +41,7 @@ function renderOrdersData(resetLimit = false) {
                 if(k==='Tổng Tiền' || k==='Khách Thanh Toán' || k==='Thành Tiền Sau Chiết Khấu' || k==='Còn Nợ' || k==='Phí Ship') cCls += ' col-money text-right';
                 if(k!=='Chi Tiết JSON') html += `<th class="${cCls.trim()}" title="${k}">${k}</th>`; 
             });
-            html += `<th class="col-action text-center">Tác vụ</th></tr></thead><tbody>`;
+            html += `<th class="col-action text-center" style="min-width:180px;">Tác vụ</th></tr></thead><tbody>`;
         }
 
         sliced.forEach(o => {
@@ -55,12 +55,21 @@ function renderOrdersData(resetLimit = false) {
               let sdtTrim = cleanPhone(o['SDT']); let isVIP = (sdtTrim.length >= 8 && vipPhones.has(sdtTrim));
               let vipBadge = isVIP ? `<span class="vip-badge">🌟 VIP</span>` : ''; let maDon = String(o['Mã Đơn']||'').replace(/'/g, "\\'");
 
+              let shipInfo = String(o['Thông tin Giao hàng'] || '').trim();
+              let isAtCounter = (shipInfo === '' || shipInfo.toLowerCase().includes('quầy'));
+
               let actionBtns = '';
               if(isDraft) {
                   actionBtns += `<button class="action-btn gray" style="padding:6px; flex:1;" onclick="openEditOrderModal('${maDon}')">✏️</button>`;
               } else if (isPending) {
                   actionBtns += `<button class="action-btn gray" style="padding:6px; flex:1;" onclick="openEditOrderModal('${maDon}')">✏️</button>`;
-                  actionBtns += `<button class="action-btn blue" style="padding:6px; flex:1.5;" onclick="markShipping('${maDon}')" title="Đóng gói và gửi đi">🚚 Gửi đi</button>`;
+                  if (isAtCounter) {
+                      // ĐÃ CẬP NHẬT: 2 Nút cho phép Ghi Nợ hoặc Thu Đủ
+                      actionBtns += `<button class="action-btn orange" style="padding:6px; flex:1.5;" onclick="markDelivered('${maDon}')" title="Khách lấy hàng đi nhưng chưa thanh toán (Ghi Nợ)">✔️ Giao (Nợ)</button>`;
+                      actionBtns += `<button class="action-btn green" style="padding:6px; flex:1.5;" onclick="markCollectedCOD('${maDon}')" title="Khách lấy hàng và trả đủ tiền">✔️ Thu Đủ</button>`;
+                  } else {
+                      actionBtns += `<button class="action-btn blue" style="padding:6px; flex:1.5;" onclick="markShipping('${maDon}')" title="Đóng gói và gửi đi">🚚 Gửi đi</button>`;
+                  }
               } else if (isShipping) {
                   actionBtns += `<button class="action-btn gray" style="padding:6px; flex:1;" onclick="openEditOrderModal('${maDon}')">✏️</button>`;
                   actionBtns += `<button class="action-btn green" style="padding:6px; flex:1.5;" onclick="markCollectedCOD('${maDon}')" title="Đã nhận được tiền từ nhà xe/bưu cục">💰 Thu COD</button>`;
@@ -126,6 +135,7 @@ function markShipping(id) {
     setTimeout(() => { isOrderProcessing = false; }, 500);
 }
 
+// HÀM CHUYÊN XỬ LÝ KHÁCH TRẢ ĐỦ TIỀN (THU COD / THU ĐỦ)
 function markCollectedCOD(id) {
     if(isOrderProcessing) return; isOrderProcessing = true;
     let o = ALL_ORDERS.find(x => x['Mã Đơn'] === id);
@@ -144,26 +154,40 @@ function markCollectedCOD(id) {
         }
         localStorage.setItem('ALL_ORDERS', JSON.stringify(ALL_ORDERS)); addQueueItem('updateOrder', o); 
         let cPhoneClean = cleanPhone(o['SDT']); if(cPhoneClean) syncCustomerStatsToSheet(cPhoneClean);
-        if(currentPage === 'orders') renderOrdersData(); alert("✅ Đã ghi nhận thu tiền COD thành công!");
+        if(currentPage === 'orders') renderOrdersData(); 
+        if(currentPage === 'add') renderRecentDrafts();
+        alert("✅ Đã hoàn tất giao hàng và thu đủ tiền!");
     } 
     setTimeout(() => { isOrderProcessing = false; }, 500);
 }
 
+// HÀM MỚI: CHUYÊN XỬ LÝ KHÁCH LẤY HÀNG NHƯNG CHƯA TRẢ TIỀN (GHI NỢ)
 function markDelivered(id) { 
    if(isOrderProcessing) return; isOrderProcessing = true;
    let o = ALL_ORDERS.find(x => x['Mã Đơn'] === id); 
    if(o) { 
        o['Trạng Thái'] = 'Đã giao'; 
+       // KHÔNG CẬP NHẬT "Khách Thanh Toán" VÀ "Còn Nợ". Giữ nguyên như lúc tạo đơn để tính nợ.
+
        if(o['Chi Tiết JSON']) {
            try {
                JSON.parse(String(o['Chi Tiết JSON'])).forEach(item => {
                    let p = ALL_PRODUCTS.find(x => x['Mã SP'] == item.maSP);
-                   if(p) { let keyTonKho = getKeyByKeyword(p, 'tồn kho') || 'Tồn kho'; let keyDangDat = getKeyByKeyword(p, 'đang đặt') || 'Đang đặt'; p[keyTonKho] = (Number(p[keyTonKho]) || 0) - Number(item.soLuong); p[keyDangDat] = (Number(p[keyDangDat]) || 0) - Number(item.soLuong); if(p[keyDangDat] < 0) p[keyDangDat] = 0; addQueueItem('updateProduct', p); }
-               }); localStorage.setItem('ALL_PRODUCTS', JSON.stringify(ALL_PRODUCTS));
+                   if(p) { 
+                       let keyTonKho = getKeyByKeyword(p, 'tồn kho') || 'Tồn kho'; 
+                       let keyDangDat = getKeyByKeyword(p, 'đang đặt') || 'Đang đặt'; 
+                       p[keyTonKho] = (Number(p[keyTonKho]) || 0) - Number(item.soLuong); 
+                       p[keyDangDat] = (Number(p[keyDangDat]) || 0) - Number(item.soLuong); 
+                       if(p[keyDangDat] < 0) p[keyDangDat] = 0; 
+                       addQueueItem('updateProduct', p); 
+                   }
+               }); 
+               localStorage.setItem('ALL_PRODUCTS', JSON.stringify(ALL_PRODUCTS));
            } catch(e) {}
        }
        localStorage.setItem('ALL_ORDERS', JSON.stringify(ALL_ORDERS)); addQueueItem('updateOrder', o); 
-       if(currentPage === 'orders') renderOrdersData(); if(currentPage === 'add') renderRecentDrafts(); 
+       if(currentPage === 'orders') renderOrdersData(); 
+       if(currentPage === 'add') renderRecentDrafts(); 
    } 
    setTimeout(() => { isOrderProcessing = false; }, 500);
 }
@@ -191,7 +215,7 @@ function printOrder(id) {
     let finalTotal = Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
     let chietKhauPct = Number(o['Chiết Khấu %'] || 0); let tongTienHang = Number(String(o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); let tienGiam = tongTienHang - finalTotal;
     let paid = Number(String(o['Khách Thanh Toán']||0).replace(/[^0-9\-]/g,"")); let debtThisOrder = finalTotal - paid;
-    let shipFee = Number(o['Phí Ship'] || 0); let shipInfo = o['Thông tin Giao hàng'] || '';
+    let shipFee = Number(o['Phí Ship'] || 0); let shipInfo = o['Thông পুরা tin Giao hàng'] || '';
     
     let cOldDebt = 0; let cPhoneClean = cleanPhone(o['SDT']);
     if(cPhoneClean) { let cus = ALL_CUSTOMERS.find(c => cleanPhone(c['Điện thoại']) === cPhoneClean); if(cus) { let totalDebtNow = getRealtimeCustomerDebt(cPhoneClean); cOldDebt = totalDebtNow - debtThisOrder; } }
@@ -501,16 +525,15 @@ function updateItem(idx, field, val, isEditMode) {
 function removeOrderItem(idx, isEditMode) { currentOrderItems.splice(idx, 1); renderOrderItemsList(isEditMode); }
 
 function updateOrderSummary(isEditMode) {
-    let discId = isEditMode ? "eoDiscount" : "cDiscount"; let sumId = isEditMode ? "eoSummary" : "addOrderSummary";
-    let paidId = isEditMode ? "eoPaid" : "cPaid"; let oldDebtId = isEditMode ? "eoOldDebt" : "cOldDebt";
-    let shipFeeId = isEditMode ? "eoShippingFee" : "cShippingFee";
-
-    let dEl = document.getElementById(discId); let disc = dEl ? Number(dEl.value) : 0; 
-    let paidEl = document.getElementById(paidId); let paid = paidEl ? Number(paidEl.value) : 0;
-    let odEl = document.getElementById(oldDebtId); let oldDebt = odEl ? Number(odEl.value) : 0;
-    let sfEl = document.getElementById(shipFeeId); let shipFee = sfEl ? Number(sfEl.value) : 0;
-    let sumDiv = document.getElementById(sumId); if(!sumDiv) return;
+    let prefix = isEditMode ? 'eo' : 'c';
+    let sumId = isEditMode ? 'eoSummary' : 'addOrderSummary';
     
+    let disc = Number(document.getElementById(prefix + 'Discount').value) || 0; 
+    let paid = Number(document.getElementById(prefix + 'Paid').value) || 0;
+    let oldDebt = Number(document.getElementById(prefix + 'OldDebt').value) || 0;
+    let shipFee = Number(document.getElementById(prefix + 'ShippingFee').value) || 0;
+    
+    let sumDiv = document.getElementById(sumId); if(!sumDiv) return;
     if(currentOrderItems.length === 0) { sumDiv.style.display = 'none'; return; }
     
     let rawTotal = currentOrderItems.reduce((sum, item) => sum + item.thanhTien, 0);
@@ -537,14 +560,19 @@ function updateOrderSummary(isEditMode) {
 
 function autoFillPaid(type, isEditMode = false) {
     if (currentOrderItems.length === 0) return alert("Vui lòng thêm sản phẩm vào đơn trước!");
-    let dEl = document.getElementById(isEditMode ? "eoDiscount" : "cDiscount"); let disc = dEl ? (Number(dEl.value) || 0) : 0;
-    let sfEl = document.getElementById(isEditMode ? "eoShippingFee" : "cShippingFee"); let shipFee = sfEl ? (Number(sfEl.value) || 0) : 0;
+    let prefix = isEditMode ? 'eo' : 'c';
+    let disc = Number(document.getElementById(prefix + 'Discount').value) || 0;
+    let shipFee = Number(document.getElementById(prefix + 'ShippingFee').value) || 0;
+    
     let rawTotal = currentOrderItems.reduce((sum, item) => sum + item.thanhTien, 0);
     let finalTotal = disc > 0 ? smartRound(rawTotal * (1 - disc/100)) : rawTotal;
     finalTotal += shipFee;
+    
     let amountToFill = 0;
-    if (type === 'current') { amountToFill = finalTotal; } else if (type === 'all') { let odEl = document.getElementById(isEditMode ? "eoOldDebt" : "cOldDebt"); let oldDebt = odEl ? (Number(odEl.value) || 0) : 0; amountToFill = finalTotal + oldDebt; }
-    let paidInput = document.getElementById(isEditMode ? "eoPaid" : "cPaid");
+    if (type === 'current') { amountToFill = finalTotal; } 
+    else if (type === 'all') { let oldDebt = Number(document.getElementById(prefix + 'OldDebt').value) || 0; amountToFill = finalTotal + oldDebt; }
+    
+    let paidInput = document.getElementById(prefix + 'Paid');
     if (paidInput) { paidInput.value = amountToFill; updateOrderSummary(isEditMode); if(!isEditMode) saveDraftLocal(); }
 }
 
@@ -572,7 +600,18 @@ function renderRecentDrafts() {
         let borderColor = o['Trạng Thái'] === 'Nháp' ? '#f59e0b' : '#3b82f6';
         let bgStyle = o['Trạng Thái'] === 'Nháp' ? 'var(--btn-bg, #fffcf8)' : 'var(--btn-bg, #eff6ff)';
         
-        // Đã sửa lại cấu trúc thẻ: width: 100%, căn lề 2 bên cực đẹp
+        let shipInfo = String(o['Thông tin Giao hàng'] || '').trim();
+        let isAtCounter = shipInfo === '' || shipInfo.toLowerCase().includes('quầy');
+        let actBtn = '';
+        if(isAtCounter) {
+            actBtn = `
+                <button class="action-btn orange" style="flex:1.5; padding:8px 2px; font-size:11px;" onclick="markDelivered('${o['Mã Đơn']}')" title="Ghi Nợ">✔️ Giao (Nợ)</button>
+                <button class="action-btn green" style="flex:1.5; padding:8px 2px; font-size:11px;" onclick="markCollectedCOD('${o['Mã Đơn']}')" title="Thu Đủ 100%">✔️ Thu Đủ</button>
+            `;
+        } else {
+            actBtn = `<button class="action-btn blue" style="flex:1.5; padding:8px 5px;" onclick="markShipping('${o['Mã Đơn']}')">🚚 Gửi Xe</button>`;
+        }
+
         return `<div style="width:100%; background:${bgStyle}; border:1px dashed ${borderColor}; padding:12px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05); color:var(--btn-col, #333); display:flex; flex-direction:column; gap:8px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
@@ -586,7 +625,7 @@ function renderRecentDrafts() {
             <div style="display:flex; gap:8px;">
                 <button class="action-btn gray" style="flex:1; padding:8px 5px;" title="In hóa đơn" onclick="printOrder('${o['Mã Đơn']}')">🖨️ In</button>
                 <button class="action-btn orange" style="flex:1.5; padding:8px 5px;" onclick="showPage('orders'); openEditOrderModal('${o['Mã Đơn']}')">✏️ Sửa</button>
-                <button class="action-btn blue" style="flex:1.5; padding:8px 5px;" onclick="markShipping('${o['Mã Đơn']}')">🚚 Gửi Xe</button>
+                ${actBtn}
             </div>
         </div>`;
     }).join('');
@@ -676,5 +715,4 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
     if(carrEl) carrEl.value = ''; if(cCodeEl) cCodeEl.value = '';
     let sumEl = document.getElementById("addOrderSummary"); if(sumEl) sumEl.style.display = 'none';
     currentOrderItems = []; renderAddFormUI(); if(currentPage === 'dashboard') renderAdvancedDashboard(); if(currentPage === 'orders') renderOrdersData();
-
 }
