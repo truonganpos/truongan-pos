@@ -49,7 +49,7 @@ function renderCustomersData(resetLimit = false) {
         
         if(s) {
             filtered = filtered.filter(c => {
-                let name = String(c['Tên khách hàng'] || c['Tên KH'] || '').toLowerCase(); let phone = cleanPhone(c['Điện thoại']); let cusId = String(c['Mã khách hàng'] || '').toLowerCase(); 
+                let name = String(c['Tên KH'] || c['Tên KH'] || '').toLowerCase(); let phone = cleanPhone(c['Điện thoại']); let cusId = String(c['Mã khách hàng'] || '').toLowerCase(); 
                 return name.includes(s) || phone.includes(s) || cusId.includes(s);
             });
         }
@@ -69,7 +69,7 @@ function renderCustomersData(resetLimit = false) {
             <thead>
                 <tr>
                     <th class="th-cus-id" title="Mã KH">Mã KH</th>
-                    <th class="th-cus-name" title="Tên khách hàng">Tên KH</th>
+                    <th class="th-cus-name" title="Tên KH">Tên KH</th>
                     <th class="th-cus-phone" title="Điện thoại">Liên hệ</th>
                     <th style="width: auto; min-width: 150px;" title="Địa chỉ">Địa chỉ</th>
                     <th class="th-cus-group text-center" title="Nhóm KH">Nhóm KH</th>
@@ -100,7 +100,7 @@ function renderCustomersData(resetLimit = false) {
                 let fbIcon = c['Link FB'] ? `<a href="${c['Link FB']}" target="_blank" style="color:#1877f2; text-decoration:none; font-size:16px; margin-left:5px;" title="Mở Facebook">📘</a>` : '';
                 let callLinks = phone ? `<a href="tel:${phone}" style="color:#3b82f6; text-decoration:none; font-size:15px; margin-right:5px;" title="Gọi điện">📞</a> <a href="https://zalo.me/${phone}" target="_blank" style="color:#10b981; text-decoration:none; font-size:15px; margin-right:5px;" title="Nhắn Zalo">💬</a> ${fbIcon}` : '';
                 
-                let cName = String(c['Tên khách hàng'] || c['Tên KH'] || '---'); let cNameTitle = cName.replace(/"/g, '&quot;');
+                let cName = String(c['Tên KH'] || c['Tên KH'] || '---'); let cNameTitle = cName.replace(/"/g, '&quot;');
                 let cAddr = String(c['Địa Chỉ'] || ''); let nhom = c['Nhóm KH'] || 'Khách Lẻ';
                 let badgeClass = nhom.includes('Sỉ') ? 'si' : ''; let avt = cName !== '---' ? cName.charAt(0).toUpperCase() : '👤';
                 
@@ -290,4 +290,5 @@ function deleteCustomer(phone) {
     ALL_CUSTOMERS = ALL_CUSTOMERS.filter(c => cleanPhone(c['Điện thoại']) !== cleanPhone(phone));
     localStorage.setItem('ALL_CUSTOMERS', JSON.stringify(ALL_CUSTOMERS));
     addQueueItem('deleteCustomer', { phone: phone }); renderCustomersData();
+
 }
