@@ -16,26 +16,34 @@ function renderAdvancedDashboard() {
     let rev = 0; let cost = 0; let itemsCount = 0; let orderCount = 0; let codTotal = 0;
 
     let filteredOrds = ALL_ORDERS.filter(o => {
-        let dt = parseDateString(o['Thời Gian']);
+        let keyTime = getKeyByKeyword(o, 'thời gian') || 'Thời Gian';
+        let dt = parseDateString(o[keyTime]);
         return dt >= startDate && dt <= endDate;
     });
 
     filteredOrds.forEach(o => {
-        let st = String(o['Trạng Thái']).trim();
-        if (st === 'Đã giao') {
-            rev += Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
-            orderCount++;
-            itemsCount += Number(o['Tổng SP'] || 0);
+        let keySt = getKeyByKeyword(o, 'trạng thái') || 'Trạng Thái';
+        let st = String(o[keySt] || '').trim();
+        
+        let keyTotal = getKeyByKeyword(o, 'thành tiền') || getKeyByKeyword(o, 'tổng tiền') || 'Tổng Tiền';
+        let keySP = getKeyByKeyword(o, 'tổng sp') || 'Tổng SP';
+        let keyJSON = getKeyByKeyword(o, 'json') || 'Chi Tiết JSON';
+        let keyNo = getKeyByKeyword(o, 'còn nợ') || 'Còn Nợ';
 
-            if (o['Chi Tiết JSON']) {
+        if (st === 'Đã giao') {
+            rev += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
+            orderCount++;
+            itemsCount += Number(o[keySP] || 0);
+
+            if (o[keyJSON]) {
                 try {
-                    let items = JSON.parse(o['Chi Tiết JSON']);
+                    let items = JSON.parse(o[keyJSON]);
                     items.forEach(i => { cost += (Number(i.giaGoc) || 0) * (Number(i.soLuong) || 0); });
                 } catch(e) {}
             }
         } 
         else if (st === 'Đang giao') {
-            codTotal += Number(String(o['Còn Nợ']||o['Thành Tiền Sau Chiết Khấu']||0).replace(/[^0-9\-]/g,""));
+            codTotal += Number(String(o[keyNo]||o[keyTotal]||0).replace(/[^0-9\-]/g,""));
         }
     });
 
@@ -49,7 +57,6 @@ function renderAdvancedDashboard() {
     let elItems = document.getElementById('dashItems'); if(elItems) elItems.innerText = `${orderCount} / ${itemsCount}`;
     let elCod = document.getElementById('dashCOD'); if(elCod) elCod.innerText = formatMoney(codTotal);
 
-    // GỌI HÀM VẼ BIỂU ĐỒ VÀ DANH SÁCH TOP (Đã fix lỗi)
     renderChart(filteredOrds, filter);
     renderTopLists(filteredOrds);
 }
@@ -60,10 +67,15 @@ function renderChart(ords, filter) {
     
     let dates = {};
     ords.forEach(o => {
-        if(String(o['Trạng Thái']).trim() === 'Đã giao') {
-            let dStr = o['Thời Gian'].split(' ')[0];
+        let keySt = getKeyByKeyword(o, 'trạng thái') || 'Trạng Thái';
+        let st = String(o[keySt] || '').trim();
+        let keyTime = getKeyByKeyword(o, 'thời gian') || 'Thời Gian';
+        let keyTotal = getKeyByKeyword(o, 'thành tiền') || getKeyByKeyword(o, 'tổng tiền') || 'Tổng Tiền';
+
+        if(st === 'Đã giao') {
+            let dStr = String(o[keyTime]||'').split(' ')[0];
             if(!dates[dStr]) dates[dStr] = 0;
-            dates[dStr] += Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
+            dates[dStr] += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
         }
     });
 
@@ -74,9 +86,14 @@ function renderChart(ords, filter) {
     if(filter === 'today' || filter === 'yesterday') {
         lbls = []; let hourly = Array(24).fill(0);
         ords.forEach(o => {
-            if(String(o['Trạng Thái']).trim() === 'Đã giao') {
-                let dt = parseDateString(o['Thời Gian']);
-                hourly[dt.getHours()] += Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
+            let keySt = getKeyByKeyword(o, 'trạng thái') || 'Trạng Thái';
+            let st = String(o[keySt] || '').trim();
+            let keyTime = getKeyByKeyword(o, 'thời gian') || 'Thời Gian';
+            let keyTotal = getKeyByKeyword(o, 'thành tiền') || getKeyByKeyword(o, 'tổng tiền') || 'Tổng Tiền';
+
+            if(st === 'Đã giao') {
+                let dt = parseDateString(o[keyTime]);
+                hourly[dt.getHours()] += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
             }
         });
         lbls = hourly.map((_, i) => i + "h"); 
@@ -100,16 +117,29 @@ function renderTopLists(ords) {
 
     let pCount = {}; let cCount = {};
     ords.forEach(o => {
-        if(String(o['Trạng Thái']).trim() !== 'Đã hủy' && String(o['Trạng Thái']).trim() !== 'Nháp') {
-            let cName = o['Tên Khách Hàng'] || 'Khách lẻ';
-            if(!cCount[cName]) cCount[cName] = 0;
-            cCount[cName] += Number(String(o['Thành Tiền Sau Chiết Khấu']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,""));
+        let keySt = getKeyByKeyword(o, 'trạng thái') || 'Trạng Thái';
+        let st = String(o[keySt] || '').trim();
 
-            if(o['Chi Tiết JSON']) {
+        if(st !== 'Đã hủy' && st !== 'Nháp' && st !== 'Đã hoàn trả') {
+            // ĐÃ FIX: TÌM TÊN KHÁCH HÀNG THÔNG MINH, KHÔNG PHỤ THUỘC IN HOA HAY IN THƯỜNG
+            let keyCusName = getKeyByKeyword(o, 'tên khách') || getKeyByKeyword(o, 'khách hàng');
+            let keyPhone = getKeyByKeyword(o, 'sdt') || getKeyByKeyword(o, 'điện thoại');
+            
+            let cName = (keyCusName && o[keyCusName]) ? o[keyCusName] : ((keyPhone && o[keyPhone]) ? o[keyPhone] : 'Khách lẻ');
+            if(String(cName).trim() === '') cName = 'Khách lẻ';
+
+            let keyTotal = getKeyByKeyword(o, 'thành tiền') || getKeyByKeyword(o, 'tổng tiền') || 'Tổng Tiền';
+            
+            if(!cCount[cName]) cCount[cName] = 0;
+            cCount[cName] += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
+
+            let keyJSON = getKeyByKeyword(o, 'json') || 'Chi Tiết JSON';
+            if(o[keyJSON]) {
                 try {
-                    JSON.parse(String(o['Chi Tiết JSON'])).forEach(i => {
-                        if(!pCount[i.tenSP]) pCount[i.tenSP] = 0;
-                        pCount[i.tenSP] += Number(i.soLuong);
+                    JSON.parse(String(o[keyJSON])).forEach(i => {
+                        let tenSP = i.tenSP || 'SP Không tên';
+                        if(!pCount[tenSP]) pCount[tenSP] = 0;
+                        pCount[tenSP] += Number(i.soLuong);
                     });
                 } catch(e){}
             }
