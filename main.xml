@@ -64,10 +64,11 @@ body.dark-theme .cod-card { background: #451a03; border-color: #d97706; }
 
 .btn-edit-tiny { position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.9); border:1px solid #eee; border-radius:50%; width:32px; height:32px; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size:14px; z-index:10; box-shadow:0 2px 5px rgba(0,0,0,0.1); transition:0.2s; color:#0070f4; }
 
-.table-responsive { width:100%; background:#fff; border-radius:10px; border:1px solid #f0f0f0; transition: background 0.3s; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* ĐÃ FIX: GHIM TIÊU ĐỀ BẢNG, CUỘN TRONG BẢNG */
+.table-responsive { width:100%; background:#fff; border-radius:10px; border:1px solid #f0f0f0; transition: background 0.3s; overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 210px); -webkit-overflow-scrolling: touch; }
 table { width:100%; border-collapse:collapse; min-width: max-content; }
 th, td { padding: 12px 10px; text-align: left; vertical-align: middle; box-sizing: border-box; white-space: nowrap;}
-th { background:#4285f4; color:#fff; font-weight:600; font-size:13px; border:none; position:relative; }
+th { background:#4285f4; color:#fff; font-weight:600; font-size:13px; border:none; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 td { border-bottom:1px solid #eee; font-size:13px; }
 tr:hover { background:#f8fafc; }
 
@@ -83,7 +84,7 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
 .th-cus-group { min-width: 100px; text-align: center; } .th-cus-debt { min-width: 120px; text-align: right; }
 .th-cus-order { min-width: 60px; text-align: center; } .th-cus-spent { min-width: 120px; text-align: right; } .th-cus-action { min-width: 130px; text-align: center; }
 
-.resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; user-select: none; z-index: 1; height: 100%; }
+.resizer { position: absolute; top: 0; right: 0; width: 5px; cursor: col-resize; user-select: none; z-index: 11; height: 100%; }
 .resizer:hover, .resizing { border-right: 2px solid #fff; background: rgba(255,255,255,0.2); }
 
 .editable-cell { cursor:text; border:1px dashed transparent; padding:4px 8px !important; border-radius:4px; transition:0.2s; }
@@ -263,7 +264,9 @@ body.dark-theme .dup-group-list { border-color: #475569; }
         <div class='view-section' id='view-orders'/>
         <div class='view-section' id='view-customers'/>
         <div class='view-section' id='view-add'/>
-        <div id='modal-container'/> <div class='header'>
+        <div id='modal-container'/> 
+
+        <div class='header'>
           <div class='header-title'>TRƯỜNG AN STORE</div>
           <div class='header-btns'>
              <button class='icon-btn' onclick='openSettingsModal()' style='background:#3b82f6; color:#fff;' title='Cài đặt máy in &amp; Ngân hàng'>&#9881;&#65039; <span class='hide-text-mobile'>Cài đặt</span></button>
@@ -311,7 +314,6 @@ body.dark-theme .dup-group-list { border-color: #475569; }
             let ui = document.getElementById("loadingUI"); 
             if(ui) ui.style.display = "flex";
             
-            // Xử lý nạp Modals vào đúng chỗ
             setTimeout(() => {
                 let mContainer = document.getElementById('modal-container');
                 if(mContainer && typeof MODALS_UI !== 'undefined') {
@@ -319,7 +321,6 @@ body.dark-theme .dup-group-list { border-color: #475569; }
                 }
             }, 300);
 
-            // Chờ các file GitHub nạp xong rồi kích hoạt hệ thống
             setTimeout(() => {
                 if(typeof ALL_PRODUCTS === 'undefined') {
                     alert("Lỗi: Không kết nối được với GitHub! Vui lòng ấn F5 hoặc kiểm tra lại đường truyền.");
