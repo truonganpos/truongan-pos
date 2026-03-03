@@ -28,7 +28,7 @@ let inlineEditCatId = null;
 let myChart = null; 
 let currentOrderItems = []; 
 let editingOrderId = null;
-let lastSettingsHash = ""; // Quản lý thay đổi cấu hình
+let lastSettingsHash = ""; 
 
 // --- 2. HÀM TIỆN ÍCH (HELPERS) ---
 function safeParseArray(key) { 
@@ -165,8 +165,22 @@ function saveSettingsInfo() {
         billNote: document.getElementById('setBillNote').value.trim()
     };
     localStorage.setItem('truongan_settings', JSON.stringify(s));
+    
+    // ĐÃ FIX: Gói cấu hình và ép đẩy NGAY LẬP TỨC lên Sheet
+    let conf = {
+        settings: s,
+        carriers: getSafeArrayFromLocal('truongan_custom_carriers'),
+        hideProd: safeParseObj('hiddenColsProducts'),
+        hideOrd: safeParseObj('hiddenColsOrders'),
+        colWidths: safeParseObj('truongan_col_widths')
+    };
+    let currentHash = JSON.stringify(conf);
+    addQueueItem('updateSettings', { "ID": "SETTING_1", "Cấu Hình JSON": currentHash });
+    lastSettingsHash = currentHash;
+    pushSyncQueue(); // Ép đẩy lên Sheet tức thì
+
     closeModal('settingsModal'); 
-    alert('✅ Đã lưu Cài đặt Hóa đơn & Ngân hàng!');
+    alert('✅ Đã lưu Cài đặt Hóa đơn & Ngân hàng thành công!');
 }
 
 function buildSettingsMenu() {
@@ -174,16 +188,24 @@ function buildSettingsMenu() {
         if(ALL_PRODUCTS && ALL_PRODUCTS.length > 0) { 
             let exclude = ['link ảnh', 'chi tiết json', '% khuyến mãi', 'giá khuyến mãi', '% km', 'giá km']; 
             let keysP = Object.keys(ALL_PRODUCTS[0] || {}).filter(k => !exclude.some(ex => String(k).toLowerCase().includes(ex))); 
-            let htmlP = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:10px;">'; 
-            htmlP += keysP.map(k => `<label style="margin:0; font-size:13px;"><input type="checkbox" onchange="toggleCol('products', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsProducts[k]?'checked':''}/> <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k}</span></label>`).join(''); 
+            let htmlP = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; overflow:hidden;">'; 
+            htmlP += keysP.map(k => `
+                <label style="margin:0; font-size:13px; display:flex; align-items:center; gap:5px; width:100%; overflow:hidden;" title="${k}">
+                    <input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('products', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsProducts[k]?'checked':''}/> 
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${k}</span>
+                </label>`).join(''); 
             htmlP += '</div>';
             let elP = document.getElementById('colMenuProducts'); if(elP) elP.innerHTML = htmlP; 
         }
         if(ALL_ORDERS && ALL_ORDERS.length > 0) { 
             let exclude = ['chi tiết json']; 
             let keysO = Object.keys(ALL_ORDERS[0] || {}).filter(k => !exclude.some(ex => String(k).toLowerCase().includes(ex))); 
-            let htmlO = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:10px;">'; 
-            htmlO += keysO.map(k => `<label style="margin:0; font-size:13px;"><input type="checkbox" onchange="toggleCol('orders', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsOrders[k]?'checked':''}/> <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k}</span></label>`).join(''); 
+            let htmlO = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; overflow:hidden;">'; 
+            htmlO += keysO.map(k => `
+                <label style="margin:0; font-size:13px; display:flex; align-items:center; gap:5px; width:100%; overflow:hidden;" title="${k}">
+                    <input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('orders', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsOrders[k]?'checked':''}/> 
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${k}</span>
+                </label>`).join(''); 
             htmlO += '</div>';
             let elO = document.getElementById('colMenuOrders'); if(elO) elO.innerHTML = htmlO; 
         }
@@ -227,6 +249,12 @@ function addNewCarrier(isEdit = false) {
         let selId = isEdit ? 'eoShippingCarrier' : 'cShippingCarrier'; 
         let sel = document.getElementById(selId); 
         if(sel) sel.value = newCarr;
+        
+        // Đẩy lên sheet
+        let conf = { settings: safeParseObj('truongan_settings'), carriers: customCarriers, hideProd: safeParseObj('hiddenColsProducts'), hideOrd: safeParseObj('hiddenColsOrders'), colWidths: safeParseObj('truongan_col_widths') };
+        addQueueItem('updateSettings', { "ID": "SETTING_1", "Cấu Hình JSON": JSON.stringify(conf) });
+        pushSyncQueue();
+
         if(!isEdit && typeof saveDraftLocal === 'function') saveDraftLocal();
     } else { 
         alert("Nhà xe này đã tồn tại trong danh sách!"); 
@@ -280,8 +308,9 @@ function hardResetCache() {
 
 function handleLogout() {
     if(confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?")) {
-        document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
+        let overlay = document.getElementById('loginOverlay');
+        if(overlay) overlay.style.display = 'flex';
+        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
         localStorage.removeItem('isLoggedIn'); 
     }
 }
@@ -297,7 +326,8 @@ function openSyncLog() {
     let html = SYNC_LOG.map(l => `<div style="padding:10px 0; border-bottom:1px dashed #444; font-size:13px;"><span style="opacity:0.6;font-size:11px;">[${l.time}]</span> <br/><b style="color:#3b82f6;">${l.msg}</b></div>`).join('');
     let b = document.getElementById('syncLogBody');
     if(b) b.innerHTML = html || '<div style="opacity:0.6;font-size:13px;">Chưa có lịch sử đồng bộ.</div>';
-    document.getElementById('syncLogModal').style.display = 'flex';
+    let m = document.getElementById('syncLogModal');
+    if(m) m.style.display = 'flex';
 }
 
 function addQueueItem(action, data) {
@@ -368,18 +398,21 @@ async function syncData(force = false, isSilent = false) {
             let resProds = await fetch(API+"?type=products"); if(!resProds.ok) throw new Error("API Fails");
             let resOrds = await fetch(API+"?type=orders"); if(!resOrds.ok) throw new Error("API Fails");
             let resCus = await fetch(API+"?type=customers"); if(!resCus.ok) throw new Error("API Fails");
+            
             let resSet = await fetch(API+"?type=settings"); 
             if(resSet.ok) {
                 let setObj = await resSet.json();
                 if(setObj && setObj['Cấu Hình JSON']) {
                     try {
                         let conf = JSON.parse(setObj['Cấu Hình JSON']);
-                        localStorage.setItem('truongan_settings', JSON.stringify(conf.settings || {}));
-                        localStorage.setItem('truongan_custom_carriers', JSON.stringify(conf.carriers || []));
-                        hiddenColsProducts = conf.hideProd || {}; hiddenColsOrders = conf.hideOrd || {};
-                        localStorage.setItem('hiddenColsProducts', JSON.stringify(hiddenColsProducts));
-                        localStorage.setItem('hiddenColsOrders', JSON.stringify(hiddenColsOrders));
-                        localStorage.setItem('truongan_col_widths', JSON.stringify(conf.colWidths || {}));
+                        // ĐÃ FIX KHIÊN BẢO VỆ: Chỉ lấy về ghi đè nếu trên Sheet THỰC SỰ CÓ DỮ LIỆU
+                        if(Object.keys(conf).length > 0) {
+                            if(conf.settings && Object.keys(conf.settings).length > 0) localStorage.setItem('truongan_settings', JSON.stringify(conf.settings));
+                            if(conf.carriers && conf.carriers.length > 0) localStorage.setItem('truongan_custom_carriers', JSON.stringify(conf.carriers));
+                            if(conf.hideProd && Object.keys(conf.hideProd).length > 0) { hiddenColsProducts = conf.hideProd; localStorage.setItem('hiddenColsProducts', JSON.stringify(hiddenColsProducts)); }
+                            if(conf.hideOrd && Object.keys(conf.hideOrd).length > 0) { hiddenColsOrders = conf.hideOrd; localStorage.setItem('hiddenColsOrders', JSON.stringify(hiddenColsOrders)); }
+                            if(conf.colWidths && Object.keys(conf.colWidths).length > 0) localStorage.setItem('truongan_col_widths', JSON.stringify(conf.colWidths));
+                        }
                         lastSettingsHash = setObj['Cấu Hình JSON'];
                         if(typeof loadCustomCarriers === 'function') loadCustomCarriers();
                     } catch(e){}
@@ -418,8 +451,6 @@ async function syncData(force = false, isSilent = false) {
 // --- 8. KHỞI TẠO (INITIALIZATION) ---
 document.addEventListener('DOMContentLoaded', () => { 
     if(localStorage.getItem('theme') === 'dark') toggleTheme();
-    
-    // Ép hệ thống mở thẳng Tab Tổng quan ngay khi vừa load xong HTML
     showPage('dashboard'); 
     
     setTimeout(() => {
