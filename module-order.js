@@ -92,7 +92,7 @@ function renderOrdersData(resetLimit = false) {
                        
                        if(k === 'Mã Đơn') { val = `<span onclick="openOrderModal('${maDon}')" style="color:#3b82f6; font-weight:bold; cursor:pointer; text-decoration:underline;">${o['Mã Đơn']}</span>`; }
                        else if(k === 'Tên Khách Hàng') { val = `<span onclick="filterOrdersByCustomer('${sdtTrim}')" style="color:#3b82f6; font-weight:bold; cursor:pointer;" title="Lọc đơn khách này">${o[k]||''}</span> ${vipBadge}`; }
-                       else if(k === 'Chiết Khấu %') { let valNum = Number(o[k] || 0); if (valNum > 0) { val = `<span class="price-text">-${valNum}%</span>`; } else { val = '0%'; } }
+                       else if(k === 'CK %') { let valNum = Number(o[k] || 0); if (valNum > 0) { val = `<span class="price-text">-${valNum}%</span>`; } else { val = '0%'; } }
                        else if(k === 'TT Sau CK') { val = `<b class="price-text" style="color:#10b981;">${formatMoney(finalTotalVal)}</b>`; }
                        else if(k === 'Trạng Thái') {
                            let bg = isDelivered ? '#d1fae5' : (isShipping ? '#e0f2fe' : (isDraft ? '#fef3c7' : '#fce7f3'));
@@ -213,7 +213,7 @@ function printOrder(id) {
     let sNote = s.billNote ? String(s.billNote).replace(/\n/g, '<br>') : 'Cảm ơn quý khách!<br>Hẹn gặp lại.';
 
     let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
-    let chietKhauPct = Number(o['Chiết Khấu %'] || 0); let tongTienHang = Number(String(o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); let tienGiam = tongTienHang - finalTotal;
+    let chietKhauPct = Number(o['CK %'] || 0); let tongTienHang = Number(String(o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); let tienGiam = tongTienHang - finalTotal;
     let paid = Number(String(o['Khách Thanh Toán']||0).replace(/[^0-9\-]/g,"")); let debtThisOrder = finalTotal - paid;
     let shipFee = Number(o['Phí Ship'] || 0); let shipInfo = o['Thông পুরা tin Giao hàng'] || '';
     
@@ -271,7 +271,7 @@ function openOrderModal(id) {
     let rawTotal = 0;
     if(o['Chi Tiết JSON']) { try { JSON.parse(String(o['Chi Tiết JSON'])).forEach(i => { rawTotal += i.thanhTien; html += `<div class="order-item-row"><div style="flex:1;"><b>[${i.maSP}] ${i.tenSP}</b> <br/><span style="font-size:12px; color:#64748b;">${formatMoney(i.giaBan)} x ${i.soLuong}</span></div><div style="font-weight:bold; color:#0070f4; display:flex; align-items:center;">${formatMoney(i.thanhTien)}</div></div>`; }); } catch(e) {} }
     
-    let chietKhau = Number(o['Chiết Khấu %']||0); let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
+    let chietKhau = Number(o['CK %']||0); let finalTotal = Number(String(o['TT Sau CK']||o['Tổng Tiền']||0).replace(/[^0-9\-]/g,"")); 
     let shipFee = Number(o['Phí Ship'] || 0);
 
     html += `</div><div class="order-detail-box"><div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;"><span>Tổng tiền hàng:</span> <b>${formatMoney(rawTotal)}</b></div>`;
@@ -292,7 +292,7 @@ function openEditOrderModal(id) {
     let ep = document.getElementById("eoPhone"); if(ep) ep.value = o['SDT'] || '';
     let ea = document.getElementById("eoAddress"); if(ea) ea.value = o['Địa Chỉ'] || ''; 
     let eno = document.getElementById("eoNote"); if(eno) eno.value = o['Ghi Chú'] || '';
-    let ed = document.getElementById("eoDiscount"); if(ed) ed.value = o['Chiết Khấu %'] || '';
+    let ed = document.getElementById("eoDiscount"); if(ed) ed.value = o['CK %'] || '';
     let epa = document.getElementById("eoPaid"); if(epa) epa.value = o['Khách Thanh Toán'] || 0;
     
     let eShipFee = document.getElementById("eoShippingFee"); if(eShipFee) eShipFee.value = o['Phí Ship'] || '';
@@ -343,7 +343,7 @@ function saveEditOrder() {
     finalTotal += shipFee; 
     let tongCong = finalTotal + oldDebtRecord; let newDebt = tongCong - paid;
 
-    o['Loại Đơn'] = "APP - " + cusType; o['Chiết Khấu %'] = disc; o['Tổng SP'] = totalItems; o['Tổng Tiền'] = rawTotal; 
+    o['Loại Đơn'] = "APP - " + cusType; o['CK %'] = disc; o['Tổng SP'] = totalItems; o['Tổng Tiền'] = rawTotal; 
     o['TT Sau CK'] = finalTotal; o['Phí Ship'] = shipFee; o['Thông tin Giao hàng'] = shipInfo;
     delete o['Thành Tiền Sau CK']; 
     o['Khách Thanh Toán'] = paid; o['Còn Nợ'] = newDebt; o['Chi Tiết JSON'] = JSON.stringify(currentOrderItems);
@@ -682,7 +682,7 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
     let newOrder = { 
         "Mã Đơn": mockId, "Thời Gian": createTime, "Tên Khách Hàng": cName || 'Đơn Nháp', "SDT": cPhoneClean, 
         "Địa Chỉ": aEl ? aEl.value : '', "Phí Ship": shipFee, "Thông tin Giao hàng": shipInfo, "Ghi Chú": noEl ? noEl.value : '', "Tổng SP": totalItems, "Tổng Tiền": rawTotal, 
-        "Chiết Khấu %": discountPct, "TT Sau CK": finalTotal, "Chi Tiết JSON": JSON.stringify(currentOrderItems), 
+        "CK %": discountPct, "TT Sau CK": finalTotal, "Chi Tiết JSON": JSON.stringify(currentOrderItems), 
         "Trạng Thái": orderStatus, "Khách Thanh Toán": paid, "Còn Nợ": debt, "Loại Đơn": loaiDon 
     };
 
