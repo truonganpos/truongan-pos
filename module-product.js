@@ -52,7 +52,7 @@ function renderProductsData(resetLimit = false) {
         let filtered = s ? ALL_PRODUCTS.filter(p => Object.values(p).join(' ').toLowerCase().includes(s)) : ALL_PRODUCTS;
         if(categoryCol && activeTags.length > 0) { filtered = filtered.filter(p => activeTags.some(tag => String(p[categoryCol]||'').includes(tag))); }
         let exclude = ['link ảnh', 'chi tiết json', '% khuyến mãi', 'giá khuyến mãi', '% km', 'giá km'];
-        let keys = Object.keys(ALL_PRODUCTS[0] || {}); 
+        let keys = Object.keys(ALL_PRODUCTS[0]).filter(k => String(k).trim() !== 'Cập Nhật Cuối');
         let vis = keys.filter(k => !hiddenColsProducts[k] && !exclude.some(ex => String(k).toLowerCase().includes(ex)));
         
         let totalStockVal = filtered.reduce((sum, p) => sum + (Number(p[getKeyByKeyword(p, 'tồn kho')])||0), 0);
@@ -295,4 +295,5 @@ function processAllDuplicates() {
     });
 
     if(hasChanges) { localStorage.setItem('ALL_PRODUCTS', JSON.stringify(ALL_PRODUCTS)); closeModal('dupModal'); renderProductsData(); alert("Đã gom các thay đổi! Hệ thống đang xử lý và đẩy lên Google Sheet..."); pushSyncQueue(); }
+
 }
