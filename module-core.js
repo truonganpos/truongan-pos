@@ -12,6 +12,9 @@ let SYNC_LOG = safeParseArray('SYNC_LOG');
 let hiddenColsProducts = safeParseObj('hiddenColsProducts'); 
 let hiddenColsOrders = safeParseObj('hiddenColsOrders');
 
+// BỘ TỪ ĐIỂN ĐỔI TÊN CỘT
+let colAliases = safeParseObj('truongan_col_aliases'); 
+
 let limitProd = 50; 
 let limitOrd = 50; 
 let limitCus = 50; 
@@ -46,20 +49,20 @@ function resolveKey(obj, keywords, exactFallback) {
     return exactFallback;
 }
 
+// BỘ ĐỌC NGÀY THÁNG ĐÃ ĐƯỢC FIX CHUẨN ĐỂ VẼ BIỂU ĐỒ 7 NGÀY
 function parseDateString(dateStr) {
     if(!dateStr) return new Date(0); 
     let dStr = String(dateStr).trim(); 
+    let timeMatch = dStr.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+    let dateMatch = dStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    let now = new Date(); let h=0, min=0, sec=0, d=now.getDate(), m=now.getMonth(), y=now.getFullYear();
+    
+    if(timeMatch) { h = parseInt(timeMatch[1]); min = parseInt(timeMatch[2]); sec = timeMatch[3]?parseInt(timeMatch[3]):0; }
+    if(dateMatch) { d = parseInt(dateMatch[1]); m = parseInt(dateMatch[2])-1; y = parseInt(dateMatch[3]); return new Date(y,m,d,h,min,sec); }
+    
     let parsed = Date.parse(dStr); 
-    if(!isNaN(parsed) && dStr.includes('-')) return new Date(parsed); 
-    let match = dStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-    if(match) {
-        let d = parseInt(match[1]), m = parseInt(match[2]) - 1, y = parseInt(match[3]);
-        let timeMatch = dStr.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
-        let h = 0, min = 0, sec = 0;
-        if(timeMatch) { h = parseInt(timeMatch[1]); min = parseInt(timeMatch[2]); sec = timeMatch[3]?parseInt(timeMatch[3]):0; }
-        return new Date(y, m, d, h, min, sec);
-    }
-    return new Date(dStr); 
+    if(!isNaN(parsed)) return new Date(parsed); 
+    return new Date(y,m,d,h,min,sec); 
 }
 
 function generateCustomerId() {
@@ -136,11 +139,11 @@ function saveSettingsInfo() {
         carriers: getSafeArrayFromLocal('truongan_custom_carriers'), 
         hideProd: safeParseObj('hiddenColsProducts'), 
         hideOrd: safeParseObj('hiddenColsOrders'), 
-        colWidths: safeParseObj('truongan_col_widths') 
+        colWidths: safeParseObj('truongan_col_widths'),
+        aliases: safeParseObj('truongan_col_aliases') 
     };
     let currentHash = JSON.stringify(conf);
     
-    // LẤY TÊN ĐĂNG NHẬP LÀM ID CÀI ĐẶT
     let accId = (typeof currentUser !== 'undefined' && currentUser && currentUser.username) ? currentUser.username : "SETTING_1";
     
     addQueueItem('updateSettings', { "ID": accId, "Cấu Hình JSON": currentHash });
@@ -151,31 +154,36 @@ function saveSettingsInfo() {
     alert(`✅ Đã lưu cấu hình riêng cho tài khoản: [${accId}]`);
 }
 
+// BỘ LƯU TÊN TIÊU ĐỀ TÙY CHỈNH
+function saveAlias(origKey, newName) {
+    colAliases[origKey] = newName.trim() || origKey;
+    localStorage.setItem('truongan_col_aliases', JSON.stringify(colAliases));
+    checkAndSyncSettings();
+    if(currentPage === 'products' && typeof renderProductsData === 'function') renderProductsData();
+    if(currentPage === 'orders' && typeof renderOrdersData === 'function') renderOrdersData();
+}
+
 function buildSettingsMenu() {
     try {
         if(ALL_PRODUCTS && ALL_PRODUCTS.length > 0) { 
-            let exclude = ['link ảnh', 'chi tiết json', '% khuyến mãi', 'giá khuyến mãi', '% km', 'giá km', 'cập nhật cuối']; 
+            let exclude = ['link ảnh', 'chi tiết json', '% khuyến mãi', 'giá khuyến mãi', '% km', 'giá km', 'cập nhật cuối', 'json']; 
             let keysP = Object.keys(ALL_PRODUCTS[0] || {}).filter(k => !exclude.some(ex => String(k).toLowerCase().includes(ex))); 
-            let htmlP = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; overflow:hidden;">'; 
-            htmlP += keysP.map(k => `
-                <label style="margin:0; font-size:13px; display:flex; align-items:center; gap:5px; width:100%; overflow:hidden;" title="${k}">
-                    <input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('products', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsProducts[k]?'checked':''}/> 
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${k}</span>
-                </label>`).join(''); 
-            htmlP += '</div>'; 
-            let elP = document.getElementById('colMenuProducts'); if(elP) elP.innerHTML = htmlP; 
+            let htmlP = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Kho Hàng - Ẩn hiện & Đổi Tên Cột:</div><div style="display:grid; grid-template-columns:1fr; gap:8px; padding:10px; max-height:200px; overflow-y:auto;">'; 
+            keysP.forEach(k => {
+                let sK = String(k).replace(/'/g, "\\'");
+                htmlP += `<div style="display:flex; align-items:center; gap:8px;"><input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('products', '${sK}')" ${!hiddenColsProducts[k]?'checked':''}/> <span style="font-size:13px; width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${k}">${k}</span> <input type="text" value="${colAliases[k] || k}" onchange="saveAlias('${sK}', this.value)" style="flex:1; padding:4px; font-size:12px; border:1px solid #ccc; border-radius:4px;" placeholder="Đổi tên..."/></div>`;
+            }); 
+            htmlP += '</div>'; let elP = document.getElementById('colMenuProducts'); if(elP) elP.innerHTML = htmlP; 
         }
         if(ALL_ORDERS && ALL_ORDERS.length > 0) { 
-            let exclude = ['chi tiết json', 'cập nhật cuối']; 
+            let exclude = ['chi tiết json', 'cập nhật cuối', 'json']; 
             let keysO = Object.keys(ALL_ORDERS[0] || {}).filter(k => !exclude.some(ex => String(k).toLowerCase().includes(ex))); 
-            let htmlO = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Cột hiển thị:</div><div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; overflow:hidden;">'; 
-            htmlO += keysO.map(k => `
-                <label style="margin:0; font-size:13px; display:flex; align-items:center; gap:5px; width:100%; overflow:hidden;" title="${k}">
-                    <input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('orders', '${String(k).replace(/'/g, "\\'")}')" ${!hiddenColsOrders[k]?'checked':''}/> 
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${k}</span>
-                </label>`).join(''); 
-            htmlO += '</div>'; 
-            let elO = document.getElementById('colMenuOrders'); if(elO) elO.innerHTML = htmlO; 
+            let htmlO = '<div style="padding:10px; font-weight:bold; border-bottom:1px solid #eee;">Đơn Hàng - Ẩn hiện & Đổi Tên Cột:</div><div style="display:grid; grid-template-columns:1fr; gap:8px; padding:10px; max-height:200px; overflow-y:auto;">'; 
+            keysO.forEach(k => {
+                let sK = String(k).replace(/'/g, "\\'");
+                htmlO += `<div style="display:flex; align-items:center; gap:8px;"><input type="checkbox" style="flex-shrink:0;" onchange="toggleCol('orders', '${sK}')" ${!hiddenColsOrders[k]?'checked':''}/> <span style="font-size:13px; width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${k}">${k}</span> <input type="text" value="${colAliases[k] || k}" onchange="saveAlias('${sK}', this.value)" style="flex:1; padding:4px; font-size:12px; border:1px solid #ccc; border-radius:4px;" placeholder="Đổi tên..."/></div>`;
+            }); 
+            htmlO += '</div>'; let elO = document.getElementById('colMenuOrders'); if(elO) elO.innerHTML = htmlO; 
         }
     } catch(e) {}
 }
@@ -190,7 +198,6 @@ function toggleCol(type, key) {
         localStorage.setItem('hiddenColsOrders', JSON.stringify(hiddenColsOrders)); 
         if(typeof renderOrdersData === 'function') renderOrdersData(); 
     } 
-    // Ép lưu cấu hình cột lên Server ngay lập tức cho User này
     checkAndSyncSettings();
     pushSyncQueue(true);
 }
@@ -221,17 +228,21 @@ function addNewCarrier(isEdit = false) {
         let selId = isEdit ? 'eoShippingCarrier' : 'cShippingCarrier'; 
         let sel = document.getElementById(selId); if(sel) sel.value = newCarr;
         
-        let conf = { settings: safeParseObj('truongan_settings'), carriers: customCarriers, hideProd: safeParseObj('hiddenColsProducts'), hideOrd: safeParseObj('hiddenColsOrders'), colWidths: safeParseObj('truongan_col_widths') };
-        let accId = (typeof currentUser !== 'undefined' && currentUser && currentUser.username) ? currentUser.username : "SETTING_1";
-        
-        addQueueItem('updateSettings', { "ID": accId, "Cấu Hình JSON": JSON.stringify(conf) }); 
+        checkAndSyncSettings(); 
         pushSyncQueue(true);
         if(!isEdit && typeof saveDraftLocal === 'function') saveDraftLocal();
     } else { alert("Nhà xe này đã tồn tại!"); }
 }
 
 function checkAndSyncSettings() { 
-    let conf = { settings: safeParseObj('truongan_settings'), carriers: getSafeArrayFromLocal('truongan_custom_carriers'), hideProd: safeParseObj('hiddenColsProducts'), hideOrd: safeParseObj('hiddenColsOrders'), colWidths: safeParseObj('truongan_col_widths') }; 
+    let conf = { 
+        settings: safeParseObj('truongan_settings'), 
+        carriers: getSafeArrayFromLocal('truongan_custom_carriers'), 
+        hideProd: safeParseObj('hiddenColsProducts'), 
+        hideOrd: safeParseObj('hiddenColsOrders'), 
+        colWidths: safeParseObj('truongan_col_widths'),
+        aliases: safeParseObj('truongan_col_aliases')
+    }; 
     let currentHash = JSON.stringify(conf); 
     let accId = (typeof currentUser !== 'undefined' && currentUser && currentUser.username) ? currentUser.username : "SETTING_1";
     
@@ -287,6 +298,7 @@ async function syncData(force = false, isSilent = false) {
                             if(conf.hideProd && Object.keys(conf.hideProd).length > 0) { hiddenColsProducts = conf.hideProd; localStorage.setItem('hiddenColsProducts', JSON.stringify(hiddenColsProducts)); }
                             if(conf.hideOrd && Object.keys(conf.hideOrd).length > 0) { hiddenColsOrders = conf.hideOrd; localStorage.setItem('hiddenColsOrders', JSON.stringify(hiddenColsOrders)); }
                             if(conf.colWidths && Object.keys(conf.colWidths).length > 0) localStorage.setItem('truongan_col_widths', JSON.stringify(conf.colWidths));
+                            if(conf.aliases && Object.keys(conf.aliases).length > 0) { colAliases = conf.aliases; localStorage.setItem('truongan_col_aliases', JSON.stringify(colAliases)); }
                         }
                         lastSettingsHash = setObj['Cấu Hình JSON']; 
                         if(typeof loadCustomCarriers === 'function') loadCustomCarriers();

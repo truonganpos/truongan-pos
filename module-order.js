@@ -52,8 +52,7 @@ function renderOrdersData(resetLimit = false) {
             return;
         }
 
-        // TỰ ĐỘNG ĐỌC CỘT TỪ GOOGLE SHEET VÀ LOẠI BỎ 2 CỘT RÁC
-        let excludeCols = ['chi tiết json', 'cập nhật cuối'];
+        let excludeCols = ['chi tiết json', 'cập nhật cuối', 'json'];
         let keys = Object.keys(sliced[0]).filter(k => {
             let kLow = String(k).toLowerCase();
             return !excludeCols.some(ex => kLow === ex) && !hiddenColsOrders[k];
@@ -63,10 +62,10 @@ function renderOrdersData(resetLimit = false) {
 
         let html = viewMode === 'table' ? `<div class="table-responsive"><table><thead><tr><th class="col-check"><input type="checkbox" onclick="toggleAllOrderChecks(this)"/></th>` : `<div class="data-grid">`;
 
-        // VẼ THANH TIÊU ĐỀ TRẢI DÀI NHƯ EXCEL
+        // ÁP DỤNG ĐỔI TÊN CỘT VÀ CĂN TRÁI TÁC VỤ TRONG TABLE
         if (viewMode === 'table') {
-            keys.forEach(k => html += `<th>${k}</th>`);
-            html += `<th class="col-action" style="min-width:160px; text-align:center;">Tác vụ</th></tr></thead><tbody>`;
+            keys.forEach(k => html += `<th>${colAliases[k] || k}</th>`);
+            html += `<th class="col-action" style="min-width:160px; text-align:left;">Tác vụ</th></tr></thead><tbody>`;
         }
 
         sliced.forEach(o => {
@@ -82,41 +81,39 @@ function renderOrdersData(resetLimit = false) {
             let shipInfo = String(o[keyShipInfo] || '').trim();
             let isAtCounter = (shipInfo === '' || shipInfo.toLowerCase().includes('quầy'));
 
-            // PHÂN QUYỀN NÚT TÁC VỤ
             let actionBtns = '';
-            let inBtn = `<button class="action-btn gray" style="padding:6px; margin:2px;" title="In" onclick="printOrder('${maDon}')">🖨️</button>`;
+            let inBtn = `<button class="action-btn gray" style="padding:6px; margin-right:5px;" title="In" onclick="printOrder('${maDon}')">🖨️</button>`;
             
             if(isAdmin || isDraft || isPending) {
-                let editBtn = `<button class="action-btn orange" style="padding:6px; margin:2px;" onclick="openEditOrderModal('${maDon}')">✏️ Sửa</button>`;
+                let editBtn = `<button class="action-btn orange" style="padding:6px; margin-right:5px;" onclick="openEditOrderModal('${maDon}')">✏️ Sửa</button>`;
                 if(isDraft) { 
                     actionBtns += editBtn; 
                 } else if (isPending) {
                     actionBtns += editBtn;
                     if (isAtCounter) {
-                        actionBtns += `<button class="action-btn green" style="padding:6px; margin:2px;" onclick="markDelivered('${maDon}')" title="Chốt Giao Nợ">✔️ Giao Nợ</button>`;
-                        actionBtns += `<button class="action-btn blue" style="padding:6px; margin:2px;" onclick="markCollectedCOD('${maDon}')" title="Thu Đủ Tiền">✔️ Thu Đủ</button>`;
+                        actionBtns += `<button class="action-btn green" style="padding:6px; margin-right:5px;" onclick="markDelivered('${maDon}')" title="Chốt Giao Nợ">✔️ Giao Nợ</button>`;
+                        actionBtns += `<button class="action-btn blue" style="padding:6px; margin-right:5px;" onclick="markCollectedCOD('${maDon}')" title="Thu Đủ Tiền">✔️ Thu Đủ</button>`;
                     } else { 
-                        actionBtns += `<button class="action-btn blue" style="padding:6px; margin:2px;" onclick="markShipping('${maDon}')" title="Gửi hàng đi">🚚 Gửi xe</button>`; 
+                        actionBtns += `<button class="action-btn blue" style="padding:6px; margin-right:5px;" onclick="markShipping('${maDon}')" title="Gửi hàng đi">🚚 Gửi xe</button>`; 
                     }
                 } else if (isShipping) { 
                     actionBtns += editBtn; 
-                    actionBtns += `<button class="action-btn green" style="padding:6px; margin:2px;" onclick="markCollectedCOD('${maDon}')" title="Thu tiền">💰 Thu Tiền</button>`; 
+                    actionBtns += `<button class="action-btn green" style="padding:6px; margin-right:5px;" onclick="markCollectedCOD('${maDon}')" title="Thu tiền">💰 Thu Tiền</button>`; 
                 } else if (isDelivered) { 
                     actionBtns += editBtn; 
                 }
             } else {
-                actionBtns += `<button class="action-btn gray" style="padding:6px; margin:2px;" disabled>🔒 Khóa</button>`;
+                actionBtns += `<button class="action-btn gray" style="padding:6px; margin-right:5px;" disabled>🔒 Khóa</button>`;
                 if(isShipping) {
-                    actionBtns += `<button class="action-btn green" style="padding:6px; margin:2px;" onclick="markCollectedCOD('${maDon}')" title="Thu tiền">💰 Thu Tiền</button>`;
+                    actionBtns += `<button class="action-btn green" style="padding:6px; margin-right:5px;" onclick="markCollectedCOD('${maDon}')" title="Thu tiền">💰 Thu Tiền</button>`;
                 }
             }
             
             actionBtns = inBtn + actionBtns;
             if(!isDelivered && isAdmin) { 
-                actionBtns += `<button class="action-btn red" style="padding:6px; margin:2px;" onclick="deleteOrder('${maDon}')">🗑️</button>`; 
+                actionBtns += `<button class="action-btn red" style="padding:6px; margin-right:5px;" onclick="deleteOrder('${maDon}')">🗑️</button>`; 
             }
 
-            // ĐIỀN DỮ LIỆU VÀO TỪNG CỘT
             if(viewMode === 'table') {
                 html += `<tr><td class="col-check"><input type="checkbox" class="chk-order-box" value="${maDon}"/></td>`;
                 
@@ -139,7 +136,8 @@ function renderOrdersData(resetLimit = false) {
                     html += `<td class="${align}">${dispVal}</td>`;
                 });
                 
-                html += `<td class="actions" style="white-space:normal; text-align:center;">${actionBtns}</td></tr>`;
+                // CĂN TRÁI CỘT TÁC VỤ
+                html += `<td class="actions" style="white-space:nowrap; text-align:left; justify-content:flex-start;">${actionBtns}</td></tr>`;
             } else {
                 html += `<div class="card"><div class="card-header"><span onclick="openOrderModal('${maDon}')" style="color:#3b82f6; font-weight:bold; cursor:pointer; text-decoration:underline;">${o[keyId]}</span></div>`;
                 keys.forEach(k => {
@@ -151,10 +149,12 @@ function renderOrdersData(resetLimit = false) {
                              let cl = isDelivered ? '#10b981' : (isShipping ? '#0284c7' : (isDraft ? '#f59e0b' : '#be185d'));
                              dispVal = `<span style="background:${bg}; color:${cl}; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold;">${o[k]}</span>`;
                         }
-                        html += `<div class="card-row"><span class="lbl">${k}:</span> <span class="val">${dispVal}</span></div>`;
+                        // ÁP DỤNG ĐỔI TÊN CỘT TRONG CARD
+                        html += `<div class="card-row"><span class="lbl">${colAliases[k] || k}:</span> <span class="val">${dispVal}</span></div>`;
                     }
                 });
-                html += `<div class="btn-group" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; justify-content:flex-end;">${actionBtns}</div></div>`;
+                // CĂN TRÁI NÚT TRONG CARD
+                html += `<div class="btn-group" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; justify-content:flex-start;">${actionBtns}</div></div>`;
             }
         });
         
@@ -510,7 +510,7 @@ function buildCustomerList() {
     ALL_ORDERS.forEach(o => {
         let phone = cleanPhone(o[keySDT]); let name = String(o[keyCusName]||'').trim(); let addr = String(o[keyAddr]||'');
         if(phone && !list.find(c => cleanPhone(c[c_phoneKey]) === phone)) { 
-            let cusObj = { 'Mã khách hàng': '', 'Tên KH': name, 'Điện thoại': phone, 'Địa Chỉ': addr, 'Nhóm KH': 'Khách Lẻ', 'Nợ Đầu Kỳ': 0, 'Tổng Nợ Thực Tế': 0, 'Đã Thu Nợ': 0, 'Tổng mua': 0, 'Tổng đơn hàng': 0, 'Link FB': '' };
+            let cusObj = { 'Mã khách hàng': '', 'Tên Khách Hàng': name, 'Điện thoại': phone, 'Địa Chỉ': addr, 'Nhóm KH': 'Khách Lẻ', 'Nợ Đầu Kỳ': 0, 'Tổng Nợ Thực Tế': 0, 'Đã Thu Nợ': 0, 'Tổng mua': 0, 'Tổng đơn hàng': 0, 'Link FB': '' };
             if (ALL_CUSTOMERS.length > 0) { let formatted = {}; for(let k in cusObj) { formatted[resolveKey(ALL_CUSTOMERS[0], [k], k)] = cusObj[k]; } list.push(formatted); } else { list.push(cusObj); }
         }
     });
@@ -526,7 +526,7 @@ function showCustomerSuggest(inputEl, isEditMode, boxIdOverride) {
         let isPhoneSearch = /\d/.test(valRaw);
         list = list.filter(c => {
             let cPhone = cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]);
-            let cName = String(c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên KH')] || '').toLowerCase();
+            let cName = String(c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] || '').toLowerCase();
             if (isPhoneSearch) return cPhone.includes(valClean);
             return cName.includes(valRaw) || cPhone.includes(valClean);
         });
@@ -537,7 +537,7 @@ function showCustomerSuggest(inputEl, isEditMode, boxIdOverride) {
     
     let html = list.map(c => {
         let phone = cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]); let stats = calcCustomerStats(phone); let cType = c[resolveKey(c, ['nhóm kh'], 'Nhóm KH')] || 'Khách Lẻ'; let debtVal = Number(stats.currentDebt) || 0; let noStr = (debtVal > 0) ? `<span class="debt-badge">Nợ cũ: ${formatMoney(debtVal)}</span>` : '';
-        let cName = c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên KH')] || '---'; let cAddr = c[resolveKey(c, ['địa chỉ'], 'Địa Chỉ')] || '';
+        let cName = c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] || '---'; let cAddr = c[resolveKey(c, ['địa chỉ'], 'Địa Chỉ')] || '';
         let safeName = String(cName).replace(/'/g,"\\'"); let safeAddress = String(cAddr).replace(/'/g,"\\'");
         
         return `<div class="suggest-item" onmousedown="selectCustomer('${safeName}', '${phone}', '${safeAddress}', ${debtVal}, '${cType}', ${isEditMode}, '${boxId}')">
@@ -738,6 +738,9 @@ function addTempItemToOrder(isEditMode) {
     setTimeout(() => { let rowId = isEditMode ? 'eoItem_'+p[k_id] : 'item_'+p[k_id]; let rowEl = document.getElementById(rowId); if(rowEl) { rowEl.style.backgroundColor = '#d1fae5'; setTimeout(() => rowEl.style.backgroundColor = 'transparent', 500); } }, 50);
 }
 
+// =======================================================
+// FIX LỖI ĐẺ CỘT TÊN KH BẰNG MẮT THẦN RESOLVE KEY
+// =======================================================
 function handleAddOrder(orderStatus = 'Chờ xử lý') {
     if(currentOrderItems.length === 0) return alert("Đơn hàng chưa có sản phẩm nào!");
     
@@ -766,25 +769,26 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
     let aEl = document.getElementById("cAddress"); let noEl = document.getElementById("cNote");
     let selT = document.getElementById('cCustomerType'); let cusType = selT ? selT.value : 'Khách Lẻ'; let loaiDon = "APP - " + cusType;
 
-    let newOrder = { 
-        "Mã Đơn": mockId, 
-        "Thời Gian": createTime, 
-        "Tên Khách Hàng": cName || 'Đơn Nháp', 
-        "SDT": cPhoneClean, 
-        "Địa Chỉ": aEl ? aEl.value : '', 
-        "Ghi Chú": noEl ? noEl.value : '', 
-        "Tổng SP": totalItems, 
-        "Tổng Tiền": rawTotal, 
-        "Chiết Khấu %": discountPct, 
-        "Thành Tiền Sau Chiết Khấu": finalTotal, 
-        "Chi Tiết JSON": JSON.stringify(currentOrderItems), 
-        "Trạng Thái": orderStatus, 
-        "Khách Thanh Toán": paid, 
-        "Còn Nợ": debt, 
-        "Loại Đơn": loaiDon,
-        "Phí Ship": shipFee, 
-        "Thông tin Giao hàng": shipInfo
-    };
+    let sampleO = ALL_ORDERS.length > 0 ? ALL_ORDERS[0] : {};
+    let newOrder = {};
+    
+    newOrder[resolveKey(sampleO, ['mã đơn'], 'Mã Đơn')] = mockId;
+    newOrder[resolveKey(sampleO, ['thời gian'], 'Thời Gian')] = createTime;
+    newOrder[resolveKey(sampleO, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] = cName || 'Đơn Nháp';
+    newOrder[resolveKey(sampleO, ['sdt', 'điện thoại'], 'SDT')] = cPhoneClean;
+    newOrder[resolveKey(sampleO, ['địa chỉ'], 'Địa Chỉ')] = aEl ? aEl.value : '';
+    newOrder[resolveKey(sampleO, ['ghi chú'], 'Ghi Chú')] = noEl ? noEl.value : '';
+    newOrder[resolveKey(sampleO, ['tổng sp'], 'Tổng SP')] = totalItems;
+    newOrder[resolveKey(sampleO, ['tổng tiền'], 'Tổng Tiền')] = rawTotal;
+    newOrder[resolveKey(sampleO, ['chiết khấu %', 'chiết khấu', 'ck %'], 'Chiết Khấu %')] = discountPct;
+    newOrder[resolveKey(sampleO, ['thành tiền sau chiết khấu', 'tt sau ck'], 'Thành Tiền Sau Chiết Khấu')] = finalTotal;
+    newOrder[resolveKey(sampleO, ['chi tiết json', 'json'], 'Chi Tiết JSON')] = JSON.stringify(currentOrderItems);
+    newOrder[resolveKey(sampleO, ['trạng thái'], 'Trạng Thái')] = orderStatus;
+    newOrder[resolveKey(sampleO, ['khách thanh toán', 'thanh toán'], 'Khách Thanh Toán')] = paid;
+    newOrder[resolveKey(sampleO, ['còn nợ'], 'Còn Nợ')] = debt;
+    newOrder[resolveKey(sampleO, ['loại đơn'], 'Loại Đơn')] = loaiDon;
+    newOrder[resolveKey(sampleO, ['phí ship'], 'Phí Ship')] = shipFee;
+    newOrder[resolveKey(sampleO, ['thông tin giao hàng'], 'Thông tin Giao hàng')] = shipInfo;
 
     ALL_ORDERS.unshift(newOrder); localStorage.setItem('ALL_ORDERS', JSON.stringify(ALL_ORDERS));
     
@@ -797,12 +801,27 @@ function handleAddOrder(orderStatus = 'Chờ xử lý') {
         
         if (cPhoneClean) {
             let cusIdx = ALL_CUSTOMERS.findIndex(c => cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]) === cPhoneClean);
+            let sampleC = ALL_CUSTOMERS.length > 0 ? ALL_CUSTOMERS[0] : {};
+            let c_nameKey = resolveKey(sampleC, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng');
+
             if(cusIdx === -1) { 
-                let cus = { "Mã khách hàng": generateCustomerId(), "Tên KH": cName, "Điện thoại": cPhoneClean, "Địa Chỉ": aEl ? aEl.value : '', "Nhóm KH": cusType, "Nợ Đầu Kỳ": 0, "Tổng Nợ Thực Tế": 0, "Đã Thu Nợ": 0, "Tổng mua": 0, "Tổng đơn hàng": 0, "Link FB": "" };
+                let cus = {};
+                cus[resolveKey(sampleC, ['mã khách hàng'], 'Mã khách hàng')] = generateCustomerId();
+                cus[c_nameKey] = cName;
+                cus[resolveKey(sampleC, ['điện thoại', 'sdt'], 'Điện thoại')] = cPhoneClean;
+                cus[resolveKey(sampleC, ['địa chỉ'], 'Địa Chỉ')] = aEl ? aEl.value : '';
+                cus[resolveKey(sampleC, ['nhóm kh'], 'Nhóm KH')] = cusType;
+                cus[resolveKey(sampleC, ['nợ đầu kỳ'], 'Nợ Đầu Kỳ')] = 0;
+                cus[resolveKey(sampleC, ['tổng nợ thực tế', 'còn nợ'], 'Tổng Nợ Thực Tế')] = 0;
+                cus[resolveKey(sampleC, ['đã thu nợ'], 'Đã Thu Nợ')] = 0;
+                cus[resolveKey(sampleC, ['tổng mua'], 'Tổng mua')] = 0;
+                cus[resolveKey(sampleC, ['tổng đơn hàng'], 'Tổng đơn hàng')] = 0;
+                cus[resolveKey(sampleC, ['link fb'], 'Link FB')] = "";
+
                 ALL_CUSTOMERS.push(cus); addQueueItem('updateCustomer', cus);
             } else {
                 let cus = ALL_CUSTOMERS[cusIdx]; let changed = false;
-                let c_nameKey = resolveKey(cus, ['tên kh', 'khách hàng'], 'Tên KH'); let c_addrKey = resolveKey(cus, ['địa chỉ'], 'Địa Chỉ'); let c_groupKey = resolveKey(cus, ['nhóm kh'], 'Nhóm KH');
+                let c_addrKey = resolveKey(cus, ['địa chỉ'], 'Địa Chỉ'); let c_groupKey = resolveKey(cus, ['nhóm kh'], 'Nhóm KH');
                 if(!cus[c_nameKey] && cName) { cus[c_nameKey] = cName; changed = true; }
                 if(!cus[c_addrKey] && aEl ? aEl.value : '') { cus[c_addrKey] = aEl.value; changed = true; }
                 if(cus[c_groupKey] !== cusType) { cus[c_groupKey] = cusType; changed = true; }
@@ -832,8 +851,21 @@ function saveEditOrder() {
     let nEl = document.getElementById("eoName"); let pEl = document.getElementById("eoPhone"); let aEl = document.getElementById("eoAddress"); let noEl = document.getElementById("eoNote"); let dEl = document.getElementById("eoDiscount"); let disc = dEl ? (Number(dEl.value) || 0) : 0; let paEl = document.getElementById("eoPaid"); let paid = paEl ? (Number(paEl.value) || 0) : 0; let odEl = document.getElementById("eoOldDebt"); let oldDebtRecord = odEl ? (Number(odEl.value) || 0) : 0; let ctSel = document.getElementById('eoCustomerType'); let cusType = ctSel ? ctSel.value : 'Khách Lẻ'; let shipFeeEl = document.getElementById("eoShippingFee"); let shipFee = shipFeeEl ? (Number(shipFeeEl.value) || 0) : 0; let carrEl = document.getElementById("eoShippingCarrier"); let cCodeEl = document.getElementById("eoShippingCode"); let carr = carrEl ? carrEl.value : ''; let cCode = cCodeEl ? cCodeEl.value.trim() : ''; let shipInfo = ''; if (carr && cCode) { shipInfo = `${carr} - ${cCode}`; } else if (carr) { shipInfo = carr; } else if (cCode) { shipInfo = cCode; }
     let rawTotal = currentOrderItems.reduce((sum, item) => sum + item.thanhTien, 0); let totalItems = currentOrderItems.reduce((sum, item) => sum + Number(item.soLuong), 0); let finalTotal = disc > 0 ? smartRound(rawTotal * (1 - disc/100)) : rawTotal; finalTotal += shipFee; let tongCong = finalTotal + oldDebtRecord; let newDebt = tongCong - paid;
 
-    if(nEl) o['Tên Khách Hàng'] = nEl.value; if(pEl) o['SDT'] = cleanPhone(pEl.value); if(aEl) o['Địa Chỉ'] = aEl.value; 
-    o['Ghi Chú'] = noEl ? noEl.value : ''; o['Loại Đơn'] = "APP - " + cusType; o['Chiết Khấu %'] = disc; o['Tổng SP'] = totalItems; o['Tổng Tiền'] = rawTotal; o['Thành Tiền Sau Chiết Khấu'] = finalTotal; o['Phí Ship'] = shipFee; o['Thông tin Giao hàng'] = shipInfo; o['Khách Thanh Toán'] = paid; o['Còn Nợ'] = newDebt; o['Chi Tiết JSON'] = JSON.stringify(currentOrderItems);
+    if(nEl) o[resolveKey(o, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] = nEl.value; 
+    if(pEl) o[resolveKey(o, ['sdt', 'điện thoại'], 'SDT')] = cleanPhone(pEl.value); 
+    if(aEl) o[resolveKey(o, ['địa chỉ'], 'Địa Chỉ')] = aEl.value; 
+    
+    o[resolveKey(o, ['ghi chú'], 'Ghi Chú')] = noEl ? noEl.value : ''; 
+    o[resolveKey(o, ['loại đơn'], 'Loại Đơn')] = "APP - " + cusType; 
+    o[resolveKey(o, ['chiết khấu %', 'chiết khấu', 'ck %'], 'Chiết Khấu %')] = disc; 
+    o[resolveKey(o, ['tổng sp'], 'Tổng SP')] = totalItems; 
+    o[resolveKey(o, ['tổng tiền'], 'Tổng Tiền')] = rawTotal; 
+    o[resolveKey(o, ['thành tiền sau chiết khấu', 'tt sau ck'], 'Thành Tiền Sau Chiết Khấu')] = finalTotal; 
+    o[resolveKey(o, ['phí ship'], 'Phí Ship')] = shipFee; 
+    o[resolveKey(o, ['thông tin giao hàng'], 'Thông tin Giao hàng')] = shipInfo; 
+    o[resolveKey(o, ['khách thanh toán', 'thanh toán'], 'Khách Thanh Toán')] = paid; 
+    o[resolveKey(o, ['còn nợ'], 'Còn Nợ')] = newDebt; 
+    o[resolveKey(o, ['chi tiết json', 'json'], 'Chi Tiết JSON')] = JSON.stringify(currentOrderItems);
     
     let keySt = resolveKey(o, ['trạng thái'], 'Trạng Thái');
     if(String(o[keySt]).trim() === 'Nháp') o[keySt] = 'Chờ xử lý';
@@ -841,13 +873,31 @@ function saveEditOrder() {
     let cPhoneClean = cleanPhone(pEl ? pEl.value : '');
     if (cPhoneClean) {
        let cusIdx = ALL_CUSTOMERS.findIndex(c => cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]) === cPhoneClean);
+       let sampleC = ALL_CUSTOMERS.length > 0 ? ALL_CUSTOMERS[0] : {};
+       let c_nameKey = resolveKey(sampleC, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng');
+
        if(cusIdx === -1) { 
-           let cus = { "Mã khách hàng": generateCustomerId(), "Tên KH": nEl.value, "Điện thoại": cPhoneClean, "Địa Chỉ": aEl.value, "Nhóm KH": cusType, "Nợ Đầu Kỳ": 0, "Tổng Nợ Thực Tế": 0, "Đã Thu Nợ": 0, "Tổng mua": 0, "Tổng đơn hàng": 0, "Link FB": "" };
+           let cus = {};
+           cus[resolveKey(sampleC, ['mã khách hàng'], 'Mã khách hàng')] = generateCustomerId();
+           cus[c_nameKey] = nEl.value;
+           cus[resolveKey(sampleC, ['điện thoại', 'sdt'], 'Điện thoại')] = cPhoneClean;
+           cus[resolveKey(sampleC, ['địa chỉ'], 'Địa Chỉ')] = aEl ? aEl.value : '';
+           cus[resolveKey(sampleC, ['nhóm kh'], 'Nhóm KH')] = cusType;
+           cus[resolveKey(sampleC, ['nợ đầu kỳ'], 'Nợ Đầu Kỳ')] = 0;
+           cus[resolveKey(sampleC, ['tổng nợ thực tế', 'còn nợ'], 'Tổng Nợ Thực Tế')] = 0;
+           cus[resolveKey(sampleC, ['đã thu nợ'], 'Đã Thu Nợ')] = 0;
+           cus[resolveKey(sampleC, ['tổng mua'], 'Tổng mua')] = 0;
+           cus[resolveKey(sampleC, ['tổng đơn hàng'], 'Tổng đơn hàng')] = 0;
+           cus[resolveKey(sampleC, ['link fb'], 'Link FB')] = "";
+
            ALL_CUSTOMERS.push(cus); addQueueItem('updateCustomer', cus);
        } else {
-           let cus = ALL_CUSTOMERS[cusIdx]; let changed = false;
-           let c_nameKey = resolveKey(cus, ['tên kh', 'khách hàng'], 'Tên KH'); let c_addrKey = resolveKey(cus, ['địa chỉ'], 'Địa Chỉ'); let c_groupKey = resolveKey(cus, ['nhóm kh'], 'Nhóm KH');
-           if(!cus[c_nameKey] && nEl.value) { cus[c_nameKey] = nEl.value; changed = true; } if(!cus[c_addrKey] && aEl.value) { cus[c_addrKey] = aEl.value; changed = true; } if(cus[c_groupKey] !== cusType) { cus[c_groupKey] = cusType; changed = true; } if(changed) addQueueItem('updateCustomer', cus);
+           let cus = ALL_CUSTOMERS[cusIdx]; let changed = false; 
+           let c_addrKey = resolveKey(cus, ['địa chỉ'], 'Địa Chỉ'); let c_groupKey = resolveKey(cus, ['nhóm kh'], 'Nhóm KH');
+           if(!cus[c_nameKey] && nEl.value) { cus[c_nameKey] = nEl.value; changed = true; } 
+           if(!cus[c_addrKey] && aEl.value) { cus[c_addrKey] = aEl.value; changed = true; } 
+           if(cus[c_groupKey] !== cusType) { cus[c_groupKey] = cusType; changed = true; } 
+           if(changed) addQueueItem('updateCustomer', cus);
        }
        localStorage.setItem('ALL_CUSTOMERS', JSON.stringify(ALL_CUSTOMERS));
     }

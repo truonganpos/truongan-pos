@@ -8,12 +8,21 @@ function renderAdvancedDashboard() {
 
     if (filter === 'today') { startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); }
     else if (filter === 'yesterday') { startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59); }
-    else if (filter === '7days') { startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); }
+    else if (filter === '7days') { startDate = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000); startDate.setHours(0,0,0,0); }
     else if (filter === 'month') { startDate = new Date(now.getFullYear(), now.getMonth(), 1); }
     else if (filter === 'lastmonth') { startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1); endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59); }
     else if (filter === 'all') { startDate = new Date(0); } 
 
     let rev = 0; let cost = 0; let itemsCount = 0; let orderCount = 0; let codTotal = 0;
+
+    // TÍNH TỔNG CÔNG NỢ TOÀN HỆ THỐNG
+    let totalDebt = 0;
+    if (typeof ALL_CUSTOMERS !== 'undefined') {
+        ALL_CUSTOMERS.forEach(c => {
+            let debt = Number(String(c[resolveKey(c, ['tổng nợ thực tế', 'còn nợ'], 'Tổng Nợ Thực Tế')]||0).replace(/[^0-9\-]/g,""));
+            if(debt > 0) totalDebt += debt;
+        });
+    }
 
     let filteredOrds = ALL_ORDERS.filter(o => {
         let keyTime = getKeyByKeyword(o, 'thời gian') || 'Thời Gian';
@@ -56,6 +65,13 @@ function renderAdvancedDashboard() {
     let elCost = document.getElementById('dashCost'); if(elCost) elCost.innerText = formatMoney(cost);
     let elItems = document.getElementById('dashItems'); if(elItems) elItems.innerText = `${orderCount} / ${itemsCount}`;
     let elCod = document.getElementById('dashCOD'); if(elCod) elCod.innerText = formatMoney(codTotal);
+    
+    // GẮN TỔNG CÔNG NỢ VÀO GIAO DIỆN
+    let elDebt = document.getElementById('dashTotalDebt'); 
+    if(elDebt) {
+        elDebt.innerText = formatMoney(totalDebt);
+        elDebt.style.color = '#ef4444';
+    }
 
     renderChart(filteredOrds, filter);
     renderTopLists(filteredOrds);
@@ -66,6 +82,26 @@ function renderChart(ords, filter) {
     if(myChart) myChart.destroy();
     
     let dates = {};
+    let now = new Date();
+    
+    // TẠO THÙNG CHỨA RỖNG ĐỂ BIỂU ĐỒ KHÔNG BỊ ĐỨT QUÃNG
+    if (filter === '7days') {
+        for(let i = 6; i >= 0; i--) {
+            let tempD = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+            let label = `${String(tempD.getDate()).padStart(2,'0')}/${String(tempD.getMonth()+1).padStart(2,'0')}`;
+            dates[label] = { rev: 0, sortVal: tempD.getTime() };
+        }
+    } else if (filter === 'month' || filter === 'lastmonth') {
+        let mTarget = filter === 'month' ? now.getMonth() : now.getMonth() - 1;
+        let yTarget = now.getFullYear();
+        if(mTarget < 0) { mTarget = 11; yTarget--; }
+        let daysInMonth = new Date(yTarget, mTarget + 1, 0).getDate();
+        for(let i = 1; i <= daysInMonth; i++) {
+            let label = `${String(i).padStart(2,'0')}/${String(mTarget+1).padStart(2,'0')}`;
+            dates[label] = { rev: 0, sortVal: new Date(yTarget, mTarget, i).getTime() };
+        }
+    }
+
     ords.forEach(o => {
         let keySt = getKeyByKeyword(o, 'trạng thái') || 'Trạng Thái';
         let st = String(o[keySt] || '').trim();
@@ -73,15 +109,16 @@ function renderChart(ords, filter) {
         let keyTotal = getKeyByKeyword(o, 'thành tiền') || getKeyByKeyword(o, 'tổng tiền') || 'Tổng Tiền';
 
         if(st === 'Đã giao') {
-            let dStr = String(o[keyTime]||'').split(' ')[0];
-            if(!dates[dStr]) dates[dStr] = 0;
-            dates[dStr] += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
+            let dt = parseDateString(o[keyTime]);
+            let label = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+            
+            if(!dates[label]) dates[label] = { rev: 0, sortVal: dt.getTime() };
+            dates[label].rev += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
         }
     });
 
-    let sortedDates = Object.keys(dates).sort((a,b) => parseDateString(a) - parseDateString(b));
-    let lbls = sortedDates;
-    let dataPts = sortedDates.map(k => dates[k]);
+    let lbls = [];
+    let dataPts = [];
 
     if(filter === 'today' || filter === 'yesterday') {
         lbls = []; let hourly = Array(24).fill(0);
@@ -96,17 +133,34 @@ function renderChart(ords, filter) {
                 hourly[dt.getHours()] += Number(String(o[keyTotal]||0).replace(/[^0-9\-]/g,""));
             }
         });
-        lbls = hourly.map((_, i) => i + "h"); 
+        lbls = hourly.map((_, i) => String(i).padStart(2,'0') + ":00"); 
         dataPts = hourly; 
+    } else {
+        // Sắp xếp theo thời gian thực (sortVal) thay vì xếp theo bảng chữ cái
+        let sortedKeys = Object.keys(dates).sort((a,b) => dates[a].sortVal - dates[b].sortVal);
+        lbls = sortedKeys;
+        dataPts = sortedKeys.map(k => dates[k].rev);
     }
 
     myChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: lbls,
-            datasets: [{ label: 'Doanh thu (VNĐ)', data: dataPts, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: '#3b82f6', pointRadius: 4 }]
+            datasets: [{ 
+                label: 'Doanh thu (VNĐ)', 
+                data: dataPts, 
+                backgroundColor: 'rgba(59, 130, 246, 0.8)', 
+                borderColor: '#2563eb', 
+                borderWidth: 1, 
+                borderRadius: 4 
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: function(val) { return formatMoney(val).replace(' đ',''); } } } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true, ticks: { callback: function(val) { return formatMoney(val).replace(' đ',''); } } } } 
+        }
     });
 }
 
@@ -121,7 +175,6 @@ function renderTopLists(ords) {
         let st = String(o[keySt] || '').trim();
 
         if(st !== 'Đã hủy' && st !== 'Nháp' && st !== 'Đã hoàn trả') {
-            // ĐÃ FIX: TÌM TÊN KHÁCH HÀNG THÔNG MINH, KHÔNG PHỤ THUỘC IN HOA HAY IN THƯỜNG
             let keyCusName = getKeyByKeyword(o, 'tên khách') || getKeyByKeyword(o, 'khách hàng');
             let keyPhone = getKeyByKeyword(o, 'sdt') || getKeyByKeyword(o, 'điện thoại');
             

@@ -5,7 +5,7 @@
 <b:include data='blog' name='all-head-content'/>
 <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' name='viewport'/>
 <title>Trường An Store - Hệ Thống Quản Lý POS</title>
-<script src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' type='text/javascript'></script>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js' type='text/javascript'/>
 
 <b:skin><![CDATA[
 /* CORE UI VÀ HEADER */
@@ -51,7 +51,7 @@ body { padding-bottom:70px; padding-top:60px; transition: background 0.3s, color
 .card-row .lbl { color:#666; font-size:13px; min-width: 80px;}
 .card-row .val { font-weight:500; text-align:right; max-width:65%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 
-/* BẢNG (TABLE) - ĐÃ FIX GHIM TIÊU ĐỀ */
+/* BẢNG (TABLE) */
 .table-responsive { width:100%; background:#fff; border-radius:10px; border:1px solid #f0f0f0; transition: background 0.3s; overflow-x: auto; overflow-y: auto; max-height: calc(100vh - 210px); -webkit-overflow-scrolling: touch; }
 table { width:100%; border-collapse:collapse; min-width: max-content; }
 th, td { padding: 12px 10px; text-align: left; vertical-align: middle; box-sizing: border-box; white-space: nowrap;}
@@ -85,10 +85,9 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
     #inlineCatMenu input[type="text"] { font-size: 12px !important; padding: 8px !important; }
 }
 
-/* ĐÃ FIX: Menu cột không bị lấp ở viền trái */
 #colMenuOrders, #colMenuProducts { max-height: none !important; overflow: visible !important; min-width: 320px; left: 0 !important; right: auto !important; }
 
-/* TỐI ƯU CĂN CHỈNH CHO ĐIỆN THOẠI (ÉP BUỘC) */
+/* MOBILE */
 @media (max-width: 850px) { 
     .section { padding: 10px; } 
     th, td { padding: 10px 8px; font-size: 12px; } 
@@ -104,7 +103,6 @@ td.actions { display:flex; gap:5px; align-items:center; justify-content:center; 
     .modal { padding: 10px; align-items: flex-start; padding-top: 30px;} 
     .modal-content { width: 100% !important; max-width: 100% !important; max-height: 85vh !important; padding: 15px !important; margin: 0 !important;}
     
-    /* ĐÃ FIX: Biến menu cột thành Popup to giữa màn hình trên Mobile */
     #inlineCatMenu, .dropdown-content {
         position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;
         width: 90vw !important; max-width: 350px !important; max-height: 80vh !important; overflow-y: auto !important;
@@ -231,22 +229,24 @@ body.dark-theme .dup-group-list { border-color: #475569; }
 <body>
   <b:section id='main' showaddelement='yes'>
     <b:widget id='HTML1' locked='false' title='Smart POS' type='HTML' version='1'>
-      <b:widget-settings><b:widget-setting name='content'></b:widget-setting></b:widget-settings>
+      <b:widget-settings>
+        <b:widget-setting name='content'/>
+      </b:widget-settings>
       <b:includable id='main'>
 
-        <div class='view-section' id='view-dashboard'></div>
-        <div class='view-section' id='view-products'></div>
-        <div class='view-section' id='view-orders'></div>
-        <div class='view-section' id='view-customers'></div>
-        <div class='view-section' id='view-add'></div>
-        <div id='modal-container'></div> 
+        <div class='view-section' id='view-dashboard'/>
+        <div class='view-section' id='view-products'/>
+        <div class='view-section' id='view-orders'/>
+        <div class='view-section' id='view-customers'/>
+        <div class='view-section' id='view-add'/>
+        <div id='modal-container'/> 
 
         <div class='header'>
           <div class='header-title'>TRƯỜNG AN STORE</div>
           <div class='header-btns'>
-             <button class='icon-btn' onclick='openSettingsModal()' style='background:#3b82f6; color:#fff;' title='Cài đặt máy in &amp; Ngân hàng'>&#9881;&#65039; <span class='hide-text-mobile'>Cài đặt</span></button>
+             <button class='icon-btn admin-only' onclick='openSettingsModal()' style='background:#3b82f6; color:#fff;' title='Cài đặt máy in &amp; Ngân hàng'>&#9881;&#65039; <span class='hide-text-mobile'>Cài đặt</span></button>
              <button class='icon-btn' onclick='hardResetCache()' style='background:#64748b; color:#fff;' title='Sửa lỗi kẹt dữ liệu'>🧹 <span class='hide-text-mobile'>Sửa Lỗi</span></button>
-             <button class='icon-btn' onclick='openReturnModal()' style='background:#ef4444; color:#fff;' title='Trả hàng nhanh'>🔄 <span class='hide-text-mobile'>Trả Hàng</span></button>
+             <button class='icon-btn admin-only' onclick='openReturnModal()' style='background:#ef4444; color:#fff;' title='Trả hàng nhanh'>🔄 <span class='hide-text-mobile'>Trả Hàng</span></button>
              <button class='icon-btn' onclick='syncData(true)' title='Tải dữ liệu mới nhất từ Sheet'>&#11015;&#65039; <span class='hide-text-mobile'>Tải Về</span></button>
              <button class='icon-btn' id='syncBtnUI' onclick='pushSyncQueue()' title='Đẩy dữ liệu hiện tại lên Sheet'>&#11014;&#65039; <span class='hide-text-mobile'>Đẩy Lên</span></button>
              <button class='icon-btn' id='themeBtn' onclick='toggleTheme()' title='Đổi giao diện'>🌙</button>
@@ -256,37 +256,53 @@ body.dark-theme .dup-group-list { border-color: #475569; }
         </div>
 
         <div class='nav'>
-          <div id='nav-dashboard' onclick='showPage(&quot;dashboard&quot;)'>🏠</div>
+          <div class='admin-only' id='nav-dashboard' onclick='showPage(&quot;dashboard&quot;)'>🏠</div>
           <div id='nav-products' onclick='showPage(&quot;products&quot;)'>📦</div>
           <div id='nav-orders' onclick='showPage(&quot;orders&quot;)'>🧾</div>
           <div id='nav-customers' onclick='showPage(&quot;customers&quot;)'>👥</div>
           <div id='nav-add' onclick='showPage(&quot;add&quot;)'>&#10133;</div>
         </div>
 
-        <div id='loadingUI'><div class='spinner'></div><div id='loadingText'>Đang kết nối hệ thống...</div></div>
+        <div id='loadingUI'><div class='spinner'/><div id='loadingText'>Đang kết nối hệ thống...</div></div>
 
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-core.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-auth.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-dashboard.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-product.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-order.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-customer.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/module-return.js'></script>
+        <script src='http://localhost/pos-truongan/module-core.js'/>
+        <script src='http://localhost/pos-truongan/module-auth.js'/>
+        <script src='http://localhost/pos-truongan/module-dashboard.js'/>
+        <script src='http://localhost/pos-truongan/module-product.js'/>
+        <script src='http://localhost/pos-truongan/module-order.js'/>
+        <script src='http://localhost/pos-truongan/module-customer.js'/>
+        <script src='http://localhost/pos-truongan/module-return.js'/>
 
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-dashboard.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-products.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-orders.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-customers.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-add.js'></script>
-        <script src='https://raw.githack.com/truonganpos/truongan-pos/refs/heads/main/ui-modals.js'></script>
+        <script src='http://localhost/pos-truongan/ui-dashboard.js'/>
+        <script src='http://localhost/pos-truongan/ui-products.js'/>
+        <script src='http://localhost/pos-truongan/ui-orders.js'/>
+        <script src='http://localhost/pos-truongan/ui-customers.js'/>
+        <script src='http://localhost/pos-truongan/ui-add.js'/>
+        <script src='http://localhost/pos-truongan/ui-modals.js'/>
 
         <script type='text/javascript'>
         //<![CDATA[
         document.addEventListener('DOMContentLoaded', () => { 
             let ui = document.getElementById("loadingUI"); 
             if(ui) ui.style.display = "flex";
-            setTimeout(() => { let mContainer = document.getElementById('modal-container'); if(mContainer && typeof MODALS_UI !== 'undefined') mContainer.innerHTML = MODALS_UI; }, 300);
-            setTimeout(() => { if(typeof ALL_PRODUCTS === 'undefined') { alert("Lỗi mạng! Không tải được file từ GitHub."); if(ui) ui.style.display = "none"; return; } if(typeof syncData === 'function') { syncData(ALL_PRODUCTS.length === 0); } }, 1500); 
+
+            // Bơm Giao diện vào thẻ DIV ngay lập tức
+            try { if(typeof DASHBOARD_UI !== 'undefined') document.getElementById('view-dashboard').innerHTML = DASHBOARD_UI; } catch(e){}
+            try { if(typeof PRODUCTS_UI !== 'undefined') document.getElementById('view-products').innerHTML = PRODUCTS_UI; } catch(e){}
+            try { if(typeof ORDERS_UI !== 'undefined') document.getElementById('view-orders').innerHTML = ORDERS_UI; } catch(e){}
+            try { if(typeof CUSTOMERS_UI !== 'undefined') document.getElementById('view-customers').innerHTML = CUSTOMERS_UI; } catch(e){}
+            try { if(typeof ADD_UI !== 'undefined') document.getElementById('view-add').innerHTML = ADD_UI; } catch(e){}
+            try { if(typeof MODALS_UI !== 'undefined') document.getElementById('modal-container').innerHTML = MODALS_UI; } catch(e){}
+
+            // Kích hoạt chạy App sau 100ms để đảm bảo giao diện đã được vẽ xong
+            setTimeout(() => { 
+                if(typeof checkInitialAuth === 'function') {
+                    checkInitialAuth();
+                } else {
+                    if(ui) ui.style.display = "none";
+                    alert("Lỗi tải file từ Localhost! Vui lòng làm 2 việc:\n1. Đảm bảo bạn đã lưu đủ 13 file JS vào thư mục C:\\xampp\\htdocs\\pos-truongan\\\n2. Nhấn vào Ổ khóa trên thanh địa chỉ -> Cài đặt trang web -> Bật cho phép Nội dung không an toàn (Insecure Content)."); 
+                }
+            }, 100); 
         });
         //]]>
         </script>

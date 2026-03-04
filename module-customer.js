@@ -7,7 +7,7 @@ function renderCustomersData(resetLimit = false) {
         let filtered = ALL_CUSTOMERS.filter(c => {
             let matchSearch = true;
             if(s) {
-                let name = String(c[resolveKey(c, ['tên kh', 'khách hàng'], 'Tên KH')] || '').toLowerCase(); 
+                let name = String(c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] || '').toLowerCase(); 
                 let phone = cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]);
                 matchSearch = name.includes(s) || phone.includes(s);
             }
@@ -26,11 +26,12 @@ function renderCustomersData(resetLimit = false) {
         let countEl = document.getElementById('customerCountDisplay'); if (countEl) countEl.innerText = filtered.length;
         let sliced = filtered.slice(0, limitCus);
         
-        let html = viewMode === 'table' ? `<div class="table-responsive"><table><thead><tr><th class="col-check"><input type="checkbox" onclick="toggleAllCustomerChecks(this)"/></th><th class="th-cus-id">Mã KH</th><th class="th-cus-name">Khách Hàng</th><th class="th-cus-phone">SĐT</th><th class="th-cus-group">Nhóm</th><th class="th-cus-debt">Còn Nợ</th><th class="th-cus-order">Đơn</th><th class="th-cus-spent">Đã chi</th><th class="th-cus-action">Tác vụ</th></tr></thead><tbody>` : `<div class="data-grid">`;
+        // CĂN TRÁI TIÊU ĐỀ TÁC VỤ
+        let html = viewMode === 'table' ? `<div class="table-responsive"><table><thead><tr><th class="col-check"><input type="checkbox" onclick="toggleAllCustomerChecks(this)"/></th><th class="th-cus-id">Mã KH</th><th class="th-cus-name">Khách Hàng</th><th class="th-cus-phone">SĐT</th><th class="th-cus-group">Nhóm</th><th class="th-cus-debt">Còn Nợ</th><th class="th-cus-order">Đơn</th><th class="th-cus-spent">Đã chi</th><th class="th-cus-action" style="text-align:left;">Tác vụ</th></tr></thead><tbody>` : `<div class="data-grid">`;
 
         sliced.forEach(c => {
             let k_id = resolveKey(c, ['mã khách hàng'], 'Mã khách hàng');
-            let k_name = resolveKey(c, ['tên kh', 'khách hàng'], 'Tên KH');
+            let k_name = resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng');
             let k_phone = resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại');
             let k_group = resolveKey(c, ['nhóm kh'], 'Nhóm KH');
             let k_debt = resolveKey(c, ['tổng nợ thực tế', 'còn nợ'], 'Tổng Nợ Thực Tế');
@@ -55,7 +56,7 @@ function renderCustomersData(resetLimit = false) {
                     <td class="th-cus-debt"><b style="color:${debt>0?'#ef4444':'#10b981'};">${formatMoney(debt)}</b></td>
                     <td class="th-cus-order">${totalOrders}</td>
                     <td class="th-cus-spent">${formatMoney(totalSpent)}</td>
-                    <td class="th-cus-action actions">
+                    <td class="th-cus-action actions" style="justify-content:flex-start;">
                         <button class="action-btn orange" onclick="openCustomerModal('${maKH}')">✏️ Sửa</button>
                         <button class="action-btn green" onclick="openPayDebtModal('${phone}')" ${debt<=0?'disabled title="Không có nợ"':'title="Thu tiền nợ"'}>💰 Thu nợ</button>
                     </td>
@@ -75,7 +76,7 @@ function renderCustomersData(resetLimit = false) {
                     </div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px;"><span>Đã chi (${totalOrders} đơn):</span> <b style="color:#10b981;">${formatMoney(totalSpent)}</b></div>
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;"><span>Nợ hiện tại:</span> <b style="color:#ef4444; font-size:15px;">${formatMoney(debt)}</b></div>
-                    <div style="display:flex; gap:5px; margin-top:auto;">
+                    <div style="display:flex; gap:5px; margin-top:auto; justify-content:flex-start;">
                         <button class="action-btn orange" style="flex:1;" onclick="openCustomerModal('${maKH}')">✏️ Sửa</button>
                         <button class="action-btn green" style="flex:1;" onclick="openPayDebtModal('${phone}')" ${debt<=0?'disabled':''}>💰 Thu nợ</button>
                     </div>
@@ -96,7 +97,7 @@ function openCustomerModal(id = null) {
     document.getElementById('cusModalTitle').innerText = c ? 'SỬA KHÁCH HÀNG' : 'THÊM KHÁCH MỚI';
     document.getElementById('cusOldPhone').value = c ? cleanPhone(c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]) : '';
     document.getElementById('cusEditPhone').value = c ? (c[resolveKey(c, ['điện thoại', 'sdt'], 'Điện thoại')]||'') : '';
-    document.getElementById('cusEditName').value = c ? (c[resolveKey(c, ['tên kh', 'khách hàng'], 'Tên KH')]||'') : '';
+    document.getElementById('cusEditName').value = c ? (c[resolveKey(c, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')]||'') : '';
     document.getElementById('cusEditType').value = c ? (c[resolveKey(c, ['nhóm kh'], 'Nhóm KH')]||'Khách Lẻ') : 'Khách Lẻ';
     document.getElementById('cusEditAddress').value = c ? (c[resolveKey(c, ['địa chỉ'], 'Địa Chỉ')]||'') : '';
     document.getElementById('cusEditFB').value = c ? (c[resolveKey(c, ['link fb'], 'Link FB')]||'') : '';
@@ -120,7 +121,8 @@ function saveCustomer() {
     let cusObj = null;
     let sCus = ALL_CUSTOMERS.length > 0 ? ALL_CUSTOMERS[0] : {};
     let c_id = resolveKey(sCus, ['mã khách hàng'], 'Mã khách hàng');
-    let c_name = resolveKey(sCus, ['tên kh', 'khách hàng'], 'Tên KH');
+    // FIX DÙNG CHỮ Tên Khách Hàng CỐ ĐỊNH, CHỐNG ĐẺ CỘT
+    let c_name = resolveKey(sCus, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng');
     let c_phone = resolveKey(sCus, ['điện thoại', 'sdt'], 'Điện thoại');
     let c_addr = resolveKey(sCus, ['địa chỉ'], 'Địa Chỉ');
     let c_group = resolveKey(sCus, ['nhóm kh'], 'Nhóm KH');
@@ -133,10 +135,17 @@ function saveCustomer() {
 
     if(isNew) {
         cusObj = { 
-            [c_id]: generateCustomerId(), [c_name]: document.getElementById('cusEditName').value, 
-            [c_phone]: newPhone, [c_addr]: document.getElementById('cusEditAddress').value, 
-            [c_group]: document.getElementById('cusEditType').value, [c_dInit]: Number(document.getElementById('cusEditDebt').value)||0, 
-            [c_dReal]: 0, [c_paid]: 0, [c_spent]: 0, [c_orders]: 0, [c_fb]: document.getElementById('cusEditFB').value 
+            [c_id]: generateCustomerId(), 
+            [c_name]: document.getElementById('cusEditName').value, 
+            [c_phone]: newPhone, 
+            [c_addr]: document.getElementById('cusEditAddress').value, 
+            [c_group]: document.getElementById('cusEditType').value, 
+            [c_dInit]: Number(document.getElementById('cusEditDebt').value)||0, 
+            [c_dReal]: 0, 
+            [c_paid]: 0, 
+            [c_spent]: 0, 
+            [c_orders]: 0, 
+            [c_fb]: document.getElementById('cusEditFB').value 
         };
         ALL_CUSTOMERS.unshift(cusObj);
     } else {
@@ -218,7 +227,7 @@ function openPayDebtModal(phone) {
     if(currentDebt <= 0) return alert("Khách hàng này hiện không có nợ!");
 
     document.getElementById('payDebtPhone').value = phoneClean;
-    document.getElementById('payDebtName').innerText = cus[resolveKey(cus, ['tên kh', 'khách hàng'], 'Tên KH')] || '---';
+    document.getElementById('payDebtName').innerText = cus[resolveKey(cus, ['tên khách hàng', 'tên kh'], 'Tên Khách Hàng')] || '---';
     document.getElementById('payDebtCurrent').innerText = formatMoney(currentDebt);
     document.getElementById('payDebtAmount').value = currentDebt; 
     

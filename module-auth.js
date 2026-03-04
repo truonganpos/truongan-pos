@@ -2,15 +2,24 @@ let currentUser = safeParseObj('currentUser');
 
 function checkInitialAuth() {
     let overlay = document.getElementById('loginOverlay');
+    let ui = document.getElementById("loadingUI");
+    
     if (currentUser && currentUser.success) {
         if(overlay) overlay.style.display = 'none';
         applyRoleUI();
-        if(typeof syncData === 'function') {
-            syncData(ALL_PRODUCTS.length === 0);
+        
+        // KIỂM TRA BỘ NHỚ ĐỆM: NẾU ĐÃ CÓ DATA -> VÀO THẲNG APP TRONG 0.1 GIÂY
+        if (typeof ALL_PRODUCTS !== 'undefined' && (ALL_PRODUCTS.length > 0 || ALL_ORDERS.length > 0)) {
+            if(ui) ui.style.display = "none";
+            if(typeof showPage === 'function') showPage(currentPage); // Bật giao diện ngay lập tức
+            if(typeof syncData === 'function') syncData(false, true); // Chạy ngầm tải đơn mới phía sau
+        } else {
+            // Lần đầu tiên đăng nhập, máy trắng trơn mới phải hiện màn hình tải
+            if(ui) ui.style.display = "flex";
+            if(typeof syncData === 'function') syncData(true); 
         }
     } else {
         if(overlay) overlay.style.display = 'flex';
-        let ui = document.getElementById("loadingUI"); 
         if(ui) ui.style.display = "none";
     }
 }
@@ -47,10 +56,15 @@ async function performLogin() {
             applyRoleUI();
             
             let ui = document.getElementById("loadingUI"); 
-            if(ui) ui.style.display = "flex";
             
-            if(typeof syncData === 'function') {
-                syncData(true); // Ép tải dữ liệu khi login
+            // XỬ LÝ SIÊU TỐC KHI ĐĂNG NHẬP LẠI
+            if (typeof ALL_PRODUCTS !== 'undefined' && ALL_PRODUCTS.length > 0) {
+                if(ui) ui.style.display = "none";
+                if(typeof showPage === 'function') showPage(currentPage);
+                if(typeof syncData === 'function') syncData(false, true);
+            } else {
+                if(ui) ui.style.display = "flex";
+                if(typeof syncData === 'function') syncData(true);
             }
         } else {
             err.innerText = result.error || "Sai tài khoản hoặc mật khẩu!";
@@ -81,7 +95,7 @@ function applyRoleUI() {
 
     // Nếu không phải admin mà lại đang ở trang dashboard thì đá sang trang tạo đơn
     if(!isAdmin && currentPage === 'dashboard') {
-        showPage('add'); 
+        if(typeof showPage === 'function') showPage('add'); 
     }
 }
 
